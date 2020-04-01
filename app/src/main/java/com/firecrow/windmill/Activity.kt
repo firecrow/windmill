@@ -54,6 +54,7 @@ fun getIconFilter(icon: Drawable, color: Int): ColorFilter {
 
     // https://stackoverflow.com/questions/30340591/changing-an-imageview-to-black-and-white
 
+
     val r:Int = color and 0x00ff0000 shr 16
     val g:Int = color and 0x0000ff00 shr 8
     val b:Int = color and 0x000000ff
@@ -63,10 +64,10 @@ fun getIconFilter(icon: Drawable, color: Int): ColorFilter {
     val ub = b/255.0f
 
     val matrix = ColorMatrix(arrayOf<Float>(
-        ur, ur, ur, 0.0f, 0.0f,
-        ug, ug, ug, 0.0f, 0.0f,
-        ub, ub, ub, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 0.75f, 0.0f
+        ur, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, ug, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, ub, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
     ).toFloatArray())
     return ColorMatrixColorFilter(matrix);
 }
