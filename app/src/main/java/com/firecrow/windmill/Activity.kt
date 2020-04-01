@@ -48,11 +48,26 @@ fun getRowColor(icon: Drawable): Int {
     return p.getVibrantColor(0xff000000.toInt())
 }
 
-fun getIconFilter(icon: Drawable): ColorFilter {
-    val matrix = ColorMatrix()
-    matrix.setSaturation(0.0f)
+fun getIconFilter(icon: Drawable, color: Int): ColorFilter {
+    //val matrix = ColorMatrix()
+    //matrix.setSaturation(0.0f)
 
     // https://stackoverflow.com/questions/30340591/changing-an-imageview-to-black-and-white
+
+    val r:Int = color and 0x00ff0000 shr 16
+    val g:Int = color and 0x0000ff00 shr 8
+    val b:Int = color and 0x000000ff
+
+    val ur = r/255.0f
+    val ug = g/255.0f
+    val ub = b/255.0f
+
+    val matrix = ColorMatrix(arrayOf<Float>(
+        ur, ur, ur, 0.0f, 0.0f,
+        ug, ug, ug, 0.0f, 0.0f,
+        ub, ub, ub, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.75f, 0.0f
+    ).toFloatArray())
     return ColorMatrixColorFilter(matrix);
 }
 
@@ -68,9 +83,14 @@ class RowData(app: ApplicationInfo, ctx: Context) {
     val color = getRowColor(app.loadIcon(pm))
 
     init {
+        val r:Int = color and 0x00ff0000 shr 16
+        val g:Int = color and 0x0000ff00 shr 8
+        val b:Int = color and 0x000000ff
+        val namecolor:Int = if(r+g+b > (255*3)/2) Color.BLACK else Color.WHITE
         namev.setText(app.loadLabel(pm).toString())
+        namev.setTextColor(namecolor)
         iconv.setImageDrawable(icon)
-        iconv.setColorFilter(getIconFilter(icon))
+        iconv.setColorFilter(getIconFilter(icon, color))
         v.setBackgroundColor(color)
     }
 }
