@@ -56,31 +56,44 @@ fun getIconFilter(icon: Drawable): ColorFilter {
     return ColorMatrixColorFilter(matrix);
 }
 
+class RowData(app: ApplicationInfo, ctx: Context) {
+    val inflater: LayoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+    val v = inflater.inflate(R.layout.row, null)
+
+    val namev = v.findViewById(R.id.appname) as TextView
+    val iconv = v.findViewById(R.id.icon) as ImageView
+
+    val pm = ctx.getPackageManager()
+    val icon = app.loadIcon(pm)
+    val color = getRowColor(app.loadIcon(pm))
+
+    init {
+        namev.setText(app.loadLabel(pm).toString())
+        iconv.setImageDrawable(icon)
+        iconv.setColorFilter(getIconFilter(icon))
+        v.setBackgroundColor(color)
+    }
+}
+
+val cache: HashMap<Int, RowData> = HashMap<Int, RowData>();
+
+fun fromCache(idx:Int, app:ApplicationInfo, ctx:Context): View {
+    cache[idx]?.let {
+        return it.v
+    } ?: run {
+        val rd = RowData(app, ctx)
+        cache.put(idx, rd)
+        return rd.v
+    }
+}
+
 class WMAdapter(context: Context, resource: Int, val alist: ArrayList<ApplicationInfo>):ArrayAdapter<ApplicationInfo>(context, resource, alist) {
     override fun getCount(): Int { return alist.count() }
     override fun getItem(idx: Int): ApplicationInfo { return alist.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
 
-
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
-        val inflater:LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val v = inflater.inflate(R.layout.row, null)
-
-        val data = alist.get(idx)
-        if(data == null) return v
-
-        val namev = v.findViewById(R.id.appname) as TextView
-        val iconv = v.findViewById(R.id.icon) as ImageView
-
-        val pm = getContext().getPackageManager()
-        val icon = data.loadIcon(pm)
-        val color = getRowColor(data.loadIcon(pm))
-
-        namev.setText(data.loadLabel(pm).toString())
-        iconv.setImageDrawable(icon)
-        iconv.setColorFilter(getIconFilter(icon))
-        v.setBackgroundColor(color)
-
-        return v;
+        val app = alist.get(idx)
+        return fromCache(idx, app, context);
     }
 }
