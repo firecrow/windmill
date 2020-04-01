@@ -3,19 +3,18 @@
     android:orientation="horizontal" android:layout_width="match_parent"
     android:layout_height="50dp">
 
-    <ImageView android:id="@+id/icon" android:layout_width="50dp" android:layout_height="50dp"></ImageView>
+    <ImageView android:id="@+id/icon" android:layout_width="50dp" android:layout_height="50dp" />
     <TextView
         android:id="@+id/appname"
-        android:layout_gravity="bottom"
-        android:layout_height="15dp"
-        android:padding="7dp"
-        android:fontFamily="SansSerif"
-        android:textSize="14dp"
-        android:textFontWeight="300"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:text="hi there this is longer"
+        android:textSize="20sp"
+        android:textColor="#999999"
         android:layout_width="wrap_content"/>
     <LinearLayout
         android:id="@+id/tools"
         android:orientation="horizontal"
         android:layout_width="60dp"
-        android:layout_height="30dp"></LinearLayout>
+        android:layout_height="30dp"/>
 </LinearLayout>

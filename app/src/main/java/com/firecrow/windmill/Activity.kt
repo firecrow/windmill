@@ -6,13 +6,11 @@ import android.content.pm.PackageManager
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.ImageView
-import android.widget.ListView
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.palette.graphics.Palette
 
@@ -28,9 +26,15 @@ class Activity : AppCompatActivity() {
         fun cmp(a: ApplicationInfo): String = a.loadLabel(packageManager).toString()
         allapps.sortBy({cmp(it)});
 
-        val layout  = findViewById(R.id.apps) as ListView;
-        val listadaptor = WMAdapter(this, R.layout.row, ArrayList(allapps));
-        layout.setAdapter(listadaptor);
+        val layout  = findViewById(R.id.apps) as ListView
+        val allarray = ArrayList(allapps)
+        val listadaptor = WMAdapter(this, R.layout.row, allarray)
+        layout.setAdapter(listadaptor)
+        layout.setDivider(null)
+        layout.setOnItemClickListener { parent, view, idx, id ->
+            val app: ApplicationInfo = allarray.get(idx)
+            packageManager.getLaunchIntentForPackage(app.packageName)?.let { startActivity(it)}
+        }
     }
 }
 
@@ -68,11 +72,11 @@ class WMAdapter(context: Context, resource: Int, val alist: ArrayList<Applicatio
         val namev = v.findViewById(R.id.appname) as TextView
         val iconv = v.findViewById(R.id.icon) as ImageView
 
-        val pm = getContext().getPackageManager();
+        val pm = getContext().getPackageManager()
         val icon = data.loadIcon(pm)
-        val color = getRowColor(data.loadIcon(pm));
+        val color = getRowColor(data.loadIcon(pm))
 
-        namev.setText(data.loadLabel(pm))
+        namev.setText(data.loadLabel(pm).toString())
         iconv.setImageDrawable(icon)
         iconv.setColorFilter(getIconFilter(icon))
         v.setBackgroundColor(color)
