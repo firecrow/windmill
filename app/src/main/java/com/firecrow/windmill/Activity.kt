@@ -10,7 +10,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.ImageView
 import android.widget.ListView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.palette.graphics.Palette
 
@@ -27,7 +29,7 @@ class Activity : AppCompatActivity() {
         allapps.sortBy({cmp(it)});
 
         val layout  = findViewById(R.id.apps) as ListView;
-        val listadaptor = WMAdapter(Activity.this, R.layout.row, allapps);
+        val listadaptor = WMAdapter(this, R.layout.row, ArrayList(allapps));
         layout.setAdapter(listadaptor);
     }
 }
@@ -56,28 +58,25 @@ class WMAdapter(context: Context, resource: Int, val alist: ArrayList<Applicatio
     override fun getItemId(idx: Int): Long { return idx.toLong() }
 
 
-    override fun getView(idx: Int, view: View, parent: ViewGroup) {
-        return if view == null
+    override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
+        val inflater:LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val v = inflater.inflate(R.layout.row, null)
 
-        inflator:LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflator
-        val v = layoutInflater.inflate(R.layout.grid_item, null);
+        val data = alist.get(idx)
+        if(data == null) return v
 
-        ApplicationInfo data = list.get(idx);
-        return if data == null
+        val namev = v.findViewById(R.id.appname) as TextView
+        val iconv = v.findViewById(R.id.icon) as ImageView
 
-        val namev = (TextView) view.findViewById(R.id.name);
-        val iconv = (ImageView) view.findViewById(R.id.icon);
+        val pm = getContext().getPackageManager();
+        val icon = data.loadIcon(pm)
+        val color = getRowColor(data.loadIcon(pm));
 
-        val icon = data.loadIcon(packageManager)
+        namev.setText(data.loadLabel(pm))
+        iconv.setImageDrawable(icon)
+        iconv.setColorFilter(getIconFilter(icon))
+        v.setBackgroundColor(color)
 
-        val color = getRowColor(data.loadIcon(packageManager));
-
-        namev.setText(data.loadLabel(packageManager));
-        iconv.setImageDrawable(icon);
-        iconv.setColorFilter(getIconFilter();
-        view.setBackgroundColor(color);
-
+        return v;
     }
-    return view;
-
 }
