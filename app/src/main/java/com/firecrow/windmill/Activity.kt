@@ -49,26 +49,43 @@ fun getRowColor(icon: Drawable): Int {
 }
 
 fun getIconFilter(icon: Drawable, color: Int): ColorFilter {
-    //val matrix = ColorMatrix()
-    //matrix.setSaturation(0.0f)
-
-    // https://stackoverflow.com/questions/30340591/changing-an-imageview-to-black-and-white
-
-
     val r:Int = color and 0x00ff0000 shr 16
     val g:Int = color and 0x0000ff00 shr 8
     val b:Int = color and 0x000000ff
 
-    val ur = r/255.0f
-    val ug = g/255.0f
-    val ub = b/255.0f
+    val total = r+g+b+1;
+
+    val ur = (255-r)/255.0f
+    val ug = (255-g)/255.0f
+    val ub = (255-b)/255.0f
+
+    val rwgt = 0.3f
+    val gwgt = 0.3f
+    val bwgt = 0.3f
 
     val matrix = ColorMatrix(arrayOf<Float>(
-        ur, 0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, ug, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, ub, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        ur, ub, ug, 0.0f, 0.0f
+    ).toFloatArray())
+    /*
+    val matrix = ColorMatrix(arrayOf<Float>(
+        rwgt, rwgt, rwgt, 0.0f, 0.0f,
+        gwgt, gwgt, gwgt, 0.0f, 0.0f,
+        bwgt, bwgt, bwgt, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f, 0.0f
     ).toFloatArray())
+    val ur = (255-r)/255.0f
+    val ug = (255-g)/255.0f
+    val ub = (255-b)/255.0f
+    val matrix = ColorMatrix(arrayOf<Float>(
+        0.0f, ug, ub, 0.0f, 0.0f,
+        0.0f, ug, ub, 0.0f, 0.0f,
+        0.0f, ug, 0.0f, 0.0f, 0.0f,
+        0.0f, ug, ub, 1.0f, 0.0f
+    ).toFloatArray())
+    */
     return ColorMatrixColorFilter(matrix);
 }
 
