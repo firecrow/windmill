@@ -3,16 +3,23 @@ package com.firecrow.windmill
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.ImageView
+import android.widget.ListView
+import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.palette.graphics.Palette
+
 
 class Activity : AppCompatActivity() {
     override fun onCreate(instance: Bundle? ) {
@@ -48,47 +55,7 @@ fun getRowColor(icon: Drawable): Int {
     return p.getVibrantColor(0xff000000.toInt())
 }
 
-fun getIconFilter(icon: Drawable, color: Int): ColorFilter {
-    val r:Int = color and 0x00ff0000 shr 16
-    val g:Int = color and 0x0000ff00 shr 8
-    val b:Int = color and 0x000000ff
-
-    val total = r+g+b+1;
-
-    val ur = (255-r)/255.0f
-    val ug = (255-g)/255.0f
-    val ub = (255-b)/255.0f
-
-    val rwgt = 0.3f
-    val gwgt = 0.3f
-    val bwgt = 0.3f
-
-    val matrix = ColorMatrix(arrayOf<Float>(
-        1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        ur, ub, ug, 0.0f, 0.0f
-    ).toFloatArray())
-    /*
-    val matrix = ColorMatrix(arrayOf<Float>(
-        rwgt, rwgt, rwgt, 0.0f, 0.0f,
-        gwgt, gwgt, gwgt, 0.0f, 0.0f,
-        bwgt, bwgt, bwgt, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
-    ).toFloatArray())
-    val ur = (255-r)/255.0f
-    val ug = (255-g)/255.0f
-    val ub = (255-b)/255.0f
-    val matrix = ColorMatrix(arrayOf<Float>(
-        0.0f, ug, ub, 0.0f, 0.0f,
-        0.0f, ug, ub, 0.0f, 0.0f,
-        0.0f, ug, 0.0f, 0.0f, 0.0f,
-        0.0f, ug, ub, 1.0f, 0.0f
-    ).toFloatArray())
-    */
-    return ColorMatrixColorFilter(matrix);
-}
-
+@RequiresApi(Build.VERSION_CODES.O)
 class RowData(app: ApplicationInfo, ctx: Context) {
     val inflater: LayoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
     val v = inflater.inflate(R.layout.row, null)
@@ -108,7 +75,6 @@ class RowData(app: ApplicationInfo, ctx: Context) {
         namev.setText(app.loadLabel(pm).toString())
         namev.setTextColor(namecolor)
         iconv.setImageDrawable(icon)
-        iconv.setColorFilter(getIconFilter(icon, color))
         v.setBackgroundColor(color)
     }
 }
