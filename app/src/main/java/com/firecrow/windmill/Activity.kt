@@ -1,8 +1,12 @@
 package com.firecrow.windmill
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -20,6 +24,8 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.palette.graphics.Palette
 
+var dbh: DBHelper? = null;
+var orderData = mutableMapOf<String, Int>()
 
 class Activity : AppCompatActivity() {
     override fun onCreate(instance: Bundle? ) {
@@ -81,6 +87,7 @@ class RowData(app: ApplicationInfo, ctx: Context) {
 
 val cache: HashMap<Int, RowData> = HashMap<Int, RowData>();
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun fromCache(idx:Int, app:ApplicationInfo, ctx:Context): View {
     cache[idx]?.let {
         return it.v
@@ -99,5 +106,55 @@ class WMAdapter(context: Context, resource: Int, val alist: ArrayList<Applicatio
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
         val app = alist.get(idx)
         return fromCache(idx, app, context);
+    }
+}
+
+class DBHelper(ctx:Context) : SQLiteOpenHelper(ctx, "windmill.db", null, 1) {
+
+    override fun onCreate(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE windmill (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pin_order INTEGER)");
+    }
+
+    override fun onUpgrade(db:SQLiteDatabase, old:Int, version:Int) {}
+
+    override fun onDowngrade(db:SQLiteDatabase, oldVersion:Int, newVersion:Int) {
+        onUpgrade(db, oldVersion, newVersion);
+    }
+}
+
+fun fetchOrder(ctx:Context){
+    val db = getDb(ctx)
+    val c:Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
+    c?.let {
+        val id_idx =  c.getColumnIndex("id")
+        val name_idx =  c.getColumnIndex("name")
+        val pin_order_idx =  c.getColumnIndex("pin_order")
+        if(c.moveToFirst()){
+            do {
+                val id=c.getInt(id_idx)
+                val name=c.getString(name_idx)
+                val pin_order=c.getInt(pin_order_idx)
+                orderData.put(name, pin_order)
+            } while(c.moveToNext())
+        }
+    }
+}
+
+fun setOrder(ctx:Context, name:String, pin_order:Int) {
+    val db = getDb(ctx)
+    val vals = ContentValues()
+    vals.put("pin_order", pin_order)
+    vals.put("name", name)
+
+    if(db.insert( "windmill", null, vals) == -1L)
+        db.rawQuery("update windmill set pin_order = ? where name = ?", arrayOf<String>(pin_order.toString(), name))
+}
+
+fun getDb(ctx:Context):SQLiteDatabase {
+    return dbh?.let{
+        it.getWritableDatabase()
+    } ?: run {
+        dbh = DBHelper(ctx)
+        return DBHelper(ctx).getWritableDatabase()
     }
 }
