@@ -42,6 +42,7 @@ class Activity : AppCompatActivity() {
         val layout  = findViewById(R.id.apps) as ListView
         val allarray = ArrayList(allapps)
         val listadaptor = WMAdapter(this, R.layout.row, allarray)
+        fetchOrder(this)
         layout.setAdapter(listadaptor)
         layout.setDivider(null)
         layout.setOnItemClickListener { parent, view, idx, id ->
@@ -68,6 +69,7 @@ class RowData(app: ApplicationInfo, ctx: Context) {
 
     val namev = v.findViewById(R.id.appname) as TextView
     val iconv = v.findViewById(R.id.icon) as ImageView
+    val pin_button = v.findViewById(R.id.pin_button) as ImageView
 
     val pm = ctx.getPackageManager()
     val icon = app.loadIcon(pm)
@@ -77,8 +79,15 @@ class RowData(app: ApplicationInfo, ctx: Context) {
         val r:Int = color and 0x00ff0000 shr 16
         val g:Int = color and 0x0000ff00 shr 8
         val b:Int = color and 0x000000ff
-        val namecolor:Int = if(r+g+b > (255*3)/2) Color.BLACK else Color.WHITE
-        namev.setText(app.loadLabel(pm).toString())
+        val isDark = +g+b > (255*3)/2;
+        val namecolor = if (isDark) Color.BLACK else Color.WHITE
+        val pin_image = if (isDark) R.drawable.not_pinned_black else R.drawable.not_pinned_white
+        val name = app.loadLabel(pm).toString()
+        pin_button.setImageResource(pin_image)
+        pin_button.setOnClickListener { view ->
+            setOrder(ctx,  name, 1)
+        }
+        namev.setText(name)
         namev.setTextColor(namecolor)
         iconv.setImageDrawable(icon)
         v.setBackgroundColor(color)
