@@ -22,8 +22,11 @@ import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.palette.graphics.Palette
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
-class Global(val listadapter:WMAdapter, val allarray:ArrayList<ApplicationInfo>, val layout:ListView)
+class Global(val listadapter:WMAdapter, var allapps:List<ApplicationInfo>, val layout:ListView)
 var dbh: DBHelper? = null;
 var global:Global? = null
 var orderData:HashMap<String, Int> = hashMapOf<String, Int>()
@@ -40,14 +43,17 @@ class Activity : AppCompatActivity() {
                 packageManager.getLaunchIntentForPackage(app.packageName) != null
             }.toMutableList()
 
-        fun cmp(a: ApplicationInfo): String = a.loadLabel(packageManager).toString()
-        allapps.sortBy({ cmp(it) });
-
         val layout = findViewById(R.id.apps) as ListView
-        val allarray = ArrayList(allapps)
+        val allarray = ArrayList<ApplicationInfo>()
         val listadapter = WMAdapter(this, R.layout.row, allarray)
-        global = Global(listadapter, allarray, layout)
+        global = Global(listadapter, allapps, layout)
         fetchOrder(this)
+        updateAppOrder(this)
+        global?.let {
+            listadapter.addAll(it.allapps)
+            listadapter.notifyDataSetChanged()
+        }
+
         layout.setAdapter(listadapter)
         layout.setDivider(null)
         layout.setOnItemClickListener { parent, view, idx, id ->
@@ -61,6 +67,26 @@ class Activity : AppCompatActivity() {
                 arrayOf<String>(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 0)
         }
+    }
+}
+
+fun isPinned(name:String): Boolean{
+    return orderData[name]?.let { it > 0 } ?: run { false }
+}
+
+fun updateAppOrder(ctx:Context){
+    Log.d("fcrow", "updateAppOrder")
+    global?.let {
+        val pm = ctx.getPackageManager()
+        it.allapps = it.allapps.sortedWith(compareBy<ApplicationInfo>({
+                val name = it.loadLabel(pm).toString()
+                val isp = if(isPinned(name)) 0 else 1
+                if(isp != 0) Log.d("fcrow", "$name $isp")
+                isp
+            }).thenBy({
+                it.loadLabel(pm).toString()
+            })
+        )
     }
 }
 
@@ -103,27 +129,22 @@ class WMAdapter(val ctx: Context, resource: Int, val alist: ArrayList<Applicatio
         val name = app.loadLabel(pm).toString()
 
         val pin_button = v.findViewById(R.id.pin_button) as ImageView
-        val is_pinned: Boolean = orderData[name]?.let { it > 0 } ?: run { false }
+        val is_pinned: Boolean = isPinned(name)
         var pin_image = R.drawable.not_pinned_white
         if (is_pinned) {
             if (isDark) {
-                Log.d("fcrow", "$name dark pinned")
                 pin_image = R.drawable.pinned_black
             } else {
-                Log.d("fcrow","$name light pinned")
                 pin_image = R.drawable.pinned_white
             }
         } else {
             if (isDark) {
-                Log.d("fcrow","$name dark not pinned")
                 pin_image = R.drawable.not_pinned_black
             } else {
-                Log.d("fcrow","$name light not pinned")
                 pin_image = R.drawable.not_pinned_white
             }
         }
         pin_button.setImageResource(pin_image)
-        Log.d("fcrow", "setting... pinned:$is_pinned dark:$isDark name:$name")
         pin_button.setOnClickListener { v ->
             val is_pinned: Boolean = orderData[name]?.let { it > 0 } ?: run { false }
             if(!is_pinned) {
@@ -132,10 +153,12 @@ class WMAdapter(val ctx: Context, resource: Int, val alist: ArrayList<Applicatio
                 clearOrder(ctx, name)
             }
             fetchOrder(ctx)
+            updateAppOrder(ctx)
             global?.let {
+                it.listadapter.clear()
+                it.listadapter.addAll(it.allapps)
                 it.listadapter.notifyDataSetChanged()
             }
-            Log.d("fcrow", "clicked...$name")
         }
         namev.setText(name)
         namev.setTextColor(namecolor)
@@ -190,7 +213,6 @@ fun setOrder(ctx:Context, name:String, pin_order:Int) {
 fun clearOrder(ctx:Context, name:String) {
     val db = getDb(ctx)
     db.delete("windmill","name = ?", arrayOf<String>(name))
-    Log.d("fcrow", "........................... deleting 'delete from windmill where name = ?' % '$name'....................")
 }
 
 fun getDb(ctx:Context):SQLiteDatabase {
