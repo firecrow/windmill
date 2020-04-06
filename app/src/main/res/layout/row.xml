@@ -15,11 +15,11 @@
     <LinearLayout
         android:id="@+id/tools"
         android:orientation="horizontal"
-        android:layout_width="62dp"
-        android:layout_height="62dp">
+        android:layout_width="50dp"
+        android:layout_height="50dp">
         <ImageView
             android:id="@+id/pin_button"
-            android:layout_width="62dp"
-            android:layout_height="62dp"/>
+            android:layout_width="50dp"
+            android:layout_height="50dp"/>
     </LinearLayout>
 </LinearLayout>

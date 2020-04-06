@@ -55,7 +55,6 @@ class Activity : AppCompatActivity() {
         }
 
         layout.setAdapter(listadapter)
-        layout.setDivider(null)
         layout.setOnItemClickListener { parent, view, idx, id ->
             val app: ApplicationInfo = allarray.get(idx)
             packageManager.getLaunchIntentForPackage(app.packageName)
@@ -124,26 +123,11 @@ class WMAdapter(val ctx: Context, resource: Int, val alist: ArrayList<Applicatio
         val r: Int = color and 0x00ff0000 shr 16
         val g: Int = color and 0x0000ff00 shr 8
         val b: Int = color and 0x000000ff
-        val isDark = r+g+b > (255 * 3) / 2;
-        val namecolor = if (isDark) Color.BLACK else Color.WHITE
         val name = app.loadLabel(pm).toString()
 
         val pin_button = v.findViewById(R.id.pin_button) as ImageView
         val is_pinned: Boolean = isPinned(name)
-        var pin_image = R.drawable.not_pinned_white
-        if (is_pinned) {
-            if (isDark) {
-                pin_image = R.drawable.pinned_black
-            } else {
-                pin_image = R.drawable.pinned_white
-            }
-        } else {
-            if (isDark) {
-                pin_image = R.drawable.not_pinned_black
-            } else {
-                pin_image = R.drawable.not_pinned_white
-            }
-        }
+        val pin_image = if (is_pinned) R.drawable.pinned_white else R.drawable.not_pinned_white
         pin_button.setImageResource(pin_image)
         pin_button.setOnClickListener { v ->
             val is_pinned: Boolean = orderData[name]?.let { it > 0 } ?: run { false }
@@ -161,7 +145,7 @@ class WMAdapter(val ctx: Context, resource: Int, val alist: ArrayList<Applicatio
             }
         }
         namev.setText(name)
-        namev.setTextColor(namecolor)
+        namev.setTextColor(Color.WHITE)
         iconv.setImageDrawable(icon)
         v.setBackgroundColor(color)
         return v
