@@ -21,10 +21,12 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.blue
 import androidx.palette.graphics.Palette
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.math.absoluteValue
 
 var listadapter:WMAdapter? = null;
 var dbh:DBHelper? = null
@@ -93,7 +95,7 @@ fun getRowColor(icon: Drawable): Int {
     return p.getVibrantColor(0xff000000.toInt())
 }
 
-fun buildRow(ctx:Context, app: AppData): View {
+fun buildRow(ctx:Context, idx:Int, app: AppData, priorColor: Int): View {
     val inflater: LayoutInflater =
         ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
     if(app.v == null) {
@@ -105,10 +107,6 @@ fun buildRow(ctx:Context, app: AppData): View {
             val pm = ctx.getPackageManager()
             val icon = app.appInfo.loadIcon(pm)
             app.color = getRowColor(app.appInfo.loadIcon(pm))
-
-            val r: Int = app.color and 0x00ff0000 shr 16
-            val g: Int = app.color and 0x0000ff00 shr 8
-            val b: Int = app.color and 0x000000ff
 
             namev.setText(app.name)
             namev.setTextColor(Color.WHITE)
@@ -126,7 +124,43 @@ fun buildRow(ctx:Context, app: AppData): View {
             } else {
                 clearOrder(ctx, app.name)
             }
-            listadapter?.let {it.update(fetchAppDataArray(ctx))}
+            listadapter?.let { it.update(fetchAppDataArray(ctx)) }
+        }
+
+        if(idx > 0) {
+            val r: Int = (app.color and 0x00ff0000 shr 16)
+            val g: Int = (app.color and 0x0000ff00 shr 8)
+            val b: Int = (app.color and 0x000000ff)
+
+            val pr:Int = (priorColor and 0x00ff0000 shr 16)
+            val pg:Int = (priorColor and 0x0000ff00 shr 8)
+            val pb:Int = (priorColor and 0x000000ff)
+
+            Log.d("fcrow", "${app.name}color<$r,$g,$b> priorColor<$pr, $pg, $pb>...................")
+
+            val er: Int = r - pr
+            val eg: Int = g - pg
+            val eb: Int = b - pb
+
+            val delta = er.absoluteValue + eg.absoluteValue + eb.absoluteValue
+            Log.d("fcrow", "delta:$delta.......")
+            if (delta < 100) {
+                Log.d("fcrow", "delta:$delta below 100.........")
+                if (r + g + b > 220 * 3) {
+                    Log.d("fcrow", "$delta damn white.......")
+                    app.color = Color.rgb(200, 200, 200)
+                } else if (r + g + b < 50) {
+                    app.color = Color.rgb(80, 80, 80)
+                    Log.d("fcrow", "$delta damn black.......")
+                } else {
+                    val nr = minOf(r + maxOf(er * 2, 30), 255)
+                    val ng = minOf(g + maxOf(eg * 2, 30), 255)
+                    val nb = minOf(b + maxOf(eb * 2, 30), 255)
+                    app.color = Color.rgb(nr, ng, nb)
+                }
+                it.setBackgroundColor(app.color)
+            }
+            Log.d("fcrow", "............................................................................................................")
         }
         return it
     } ?: run {
@@ -141,6 +175,7 @@ class Activity : AppCompatActivity() {
         setContentView(R.layout.main)
 
         val layout = findViewById<ListView>(R.id.apps) as ListView
+        layout.setDivider(null)
         val apps = fetchAppDataArray(this)
         listadapter = WMAdapter(this, R.layout.row, apps)
         listadapter?.let {
@@ -169,7 +204,8 @@ class WMAdapter(val ctx: Context, resource: Int, var apps: ArrayList<AppData>):
     }
 
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
-        return buildRow(ctx, getItem(idx))
+        val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
+        return buildRow(ctx, idx, getItem(idx), priorColor)
     }
 }
 
