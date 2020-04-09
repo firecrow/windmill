@@ -15,6 +15,7 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,24 +28,41 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.math.absoluteValue
+import kotlin.collections.List
 
 var listadapter:WMAdapter? = null;
 var dbh:DBHelper? = null
 
-class AppData (val appInfo: ApplicationInfo, var name:String, var color:Int, var order: Int, var is_pinned:Boolean, var v:View?);
+enum class LayoutType {
+    APP,
+    SEARCH
+}
+
+class AppData (
+    val appInfo: ApplicationInfo,
+    var name:String,
+    var color:Int,
+    var order: Int,
+    var is_pinned:Boolean,
+    var v:View?,
+    val type: LayoutType);
 
 fun fetchAppDataArray(ctx:Context):ArrayList<AppData> {
     val orderData = hashMapOf<String, Int>()
     fetchOrder(ctx, orderData)
     val pm = ctx.getPackageManager();
-    val apps =  pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
+    val searchApp = AppData(ApplicationInfo(), "search", 0x00000000,0, true, null, LayoutType.SEARCH)
+    val items:ArrayList<AppData> = arrayListOf<AppData>()
+    val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
         pm.getLaunchIntentForPackage(app.packageName) != null
-    }.toMutableList().map {
+    }.toMutableList<ApplicationInfo>().map {
         val name = it.loadLabel(pm).toString()
         val order = orderData[name]?.let {it} ?: run {0}
-        AppData( it, name, 0x00000000, order, order != 0, null )
-    }
-    return ArrayList<AppData>(apps.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name })))
+        AppData( it, name, 0x00000000, order, order != 0, null, LayoutType.APP)
+    }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name }))
+    items.add(searchApp)
+    items.addAll(apps)
+    return items
 }
 
 fun fetchOrder(ctx:Context, orderData:HashMap<String, Int>){
@@ -95,6 +113,20 @@ fun getRowColor(icon: Drawable): Int {
     return p.getVibrantColor(0xff000000.toInt())
 }
 
+fun buildSearchRow(ctx:Context, idx:Int, app: AppData): View {
+    val inflater: LayoutInflater =
+        ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+    if (app.v == null) {
+        app.v = inflater.inflate(R.layout.row_search, null)
+        app.v?.let {
+            val inputv = it.findViewById(R.id.search) as EditText
+            return it
+        }
+    }
+    return  inflater.inflate(R.layout.row_search, null)
+}
+
+
 fun buildRow(ctx:Context, idx:Int, app: AppData, priorColor: Int): View {
     val inflater: LayoutInflater =
         ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -128,24 +160,21 @@ fun buildRow(ctx:Context, idx:Int, app: AppData, priorColor: Int): View {
         }
 
         if(idx > 0) {
-            val r: Int = (app.color and 0x00ff0000 shr 16)
-            val g: Int = (app.color and 0x0000ff00 shr 8)
-            val b: Int = (app.color and 0x000000ff)
 
-            val pr:Int = (priorColor and 0x00ff0000 shr 16)
-            val pg:Int = (priorColor and 0x0000ff00 shr 8)
-            val pb:Int = (priorColor and 0x000000ff)
+            val r = Color.red(app.color)
+            val g = Color.green(app.color)
+            val b = Color.blue(app.color)
 
-            Log.d("fcrow", "${app.name}color<$r,$g,$b> priorColor<$pr, $pg, $pb>...................")
+            val er: Int = r - Color.red(priorColor)
+            val eg: Int = g - Color.green(priorColor)
+            val eb: Int = b - Color.blue(priorColor)
 
-            val er: Int = r - pr
-            val eg: Int = g - pg
-            val eb: Int = b - pb
+            Log.d("fcrow", "${app.name} rbg<$r, $g, $b> deltas<$er,$eg,$eb>...................")
 
             val delta = er.absoluteValue + eg.absoluteValue + eb.absoluteValue
             Log.d("fcrow", "delta:$delta.......")
             if (delta < 100) {
-                Log.d("fcrow", "delta:$delta below 100.........")
+                Log.d("fcrow", "delta:$delta below 100================.........")
                 if (r + g + b > 220 * 3) {
                     Log.d("fcrow", "$delta damn white.......")
                     app.color = Color.rgb(200, 200, 200)
@@ -153,9 +182,20 @@ fun buildRow(ctx:Context, idx:Int, app: AppData, priorColor: Int): View {
                     app.color = Color.rgb(80, 80, 80)
                     Log.d("fcrow", "$delta damn black.......")
                 } else {
-                    val nr = minOf(r + maxOf(er * 2, 30), 255)
-                    val ng = minOf(g + maxOf(eg * 2, 30), 255)
-                    val nb = minOf(b + maxOf(eb * 2, 30), 255)
+                    Log.d("fcrow", "$delta in main.......")
+                    fun getAtleast(d:Int, x:Int):Int {
+                        var sign = kotlin.math.sign(d.toDouble())
+                        if(sign == 0.0) sign = 1.0;
+                        val value = (maxOf(d.absoluteValue*2, 80) * sign).toInt()
+                        Log.d("fcrow", "sign: $sign value:$value")
+                        val withOrig = value+x
+                        val withinBounds = maxOf(minOf(withOrig, 255), 0)
+                        return return withinBounds
+                    }
+                    val nr = getAtleast(er, r)
+                    val ng = getAtleast(eg, g)
+                    val nb = getAtleast(eb, b)
+                    Log.d("fcrow", "${app.name} final color<$nr,$ng,$nb>...................")
                     app.color = Color.rgb(nr, ng, nb)
                 }
                 it.setBackgroundColor(app.color)
@@ -189,6 +229,12 @@ class Activity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onResume(){
+        val layout = findViewById<ListView>(R.id.apps) as ListView
+        layout.setSelection(0)
+        super.onResume()
+    }
 }
 
 class WMAdapter(val ctx: Context, resource: Int, var apps: ArrayList<AppData>):
@@ -205,7 +251,11 @@ class WMAdapter(val ctx: Context, resource: Int, var apps: ArrayList<AppData>):
 
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
-        return buildRow(ctx, idx, getItem(idx), priorColor)
+        val item = getItem(idx)
+        if(item.type == LayoutType.SEARCH) {
+            return buildSearchRow(ctx, idx, item)
+        }
+        return buildRow(ctx, idx, item, priorColor)
     }
 }
 
