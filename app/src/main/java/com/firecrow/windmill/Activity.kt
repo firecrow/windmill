@@ -46,62 +46,6 @@ class AppData (
     var v:View?,
     val type: LayoutType);
 
-fun fetchAppDataArray(ctx:Context):ArrayList<AppData> {
-    val orderData = fetchOrder(ctx)
-    val pm = ctx.getPackageManager();
-    val searchApp = AppData(ApplicationInfo(), "search", 0x00000000,0, true, null, LayoutType.SEARCH)
-    val items:ArrayList<AppData> = arrayListOf<AppData>()
-    val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
-        pm.getLaunchIntentForPackage(app.packageName) != null
-    }.toMutableList<ApplicationInfo>().map {
-        val name = it.loadLabel(pm).toString()
-        val order = orderData[name]?.let {it} ?: run {0}
-        AppData( it, name, 0x00000000, order, order != 0, null, LayoutType.APP)
-    }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name }))
-    items.add(searchApp)
-    items.addAll(apps)
-    return items
-}
-
-fun fetchOrder(ctx:Context): HashMap<String, Int>{
-    val data = hashMapOf<String, Int>()
-    val db = getDb(ctx)
-    val c:Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
-    c?.let {
-        if(c.moveToFirst()){
-            do {
-                val name=c.getString(c.getColumnIndex("name"))
-                val pin_order=c.getInt(c.getColumnIndex("pin_order"))
-                data.put(name, pin_order)
-            } while(c.moveToNext())
-        }
-    }
-    return data
-}
-
-fun setOrder(ctx:Context, name:String, pin_order:Int) {
-    val db = getDb(ctx)
-    val vals = ContentValues()
-    vals.put("pin_order", pin_order)
-    vals.put("name", name)
-
-    if(db.insert( "windmill", null, vals) == -1L)
-        db.rawQuery("update windmill set pin_order = ? where name = ?", arrayOf<String>(pin_order.toString(), name))
-}
-
-fun clearOrder(ctx:Context, name:String) {
-    val db = getDb(ctx)
-    db.delete("windmill","name = ?", arrayOf<String>(name))
-}
-
-fun getDb(ctx:Context):SQLiteDatabase {
-    return dbh?.let{
-        it.getWritableDatabase()
-    } ?: run {
-        dbh = DBHelper(ctx)
-        return DBHelper(ctx).getWritableDatabase()
-    }
-}
 
 fun getRowColor(icon: Drawable): Int {
     val iconb: Bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
@@ -122,8 +66,7 @@ class Activity : AppCompatActivity() {
 
         val layout = findViewById<ListView>(R.id.apps) as ListView
         layout.setDivider(null)
-        val apps = fetchAppDataArray(this)
-        val listadapter = WMAdapter(this, layout, R.layout.row, apps)
+        val listadapter = WMAdapter(this, layout, R.layout.row, arrayListOf<AppData>())
         layout.setAdapter(listadapter)
         layout.setOnItemClickListener { parent, view, idx, id ->
             val app: AppData = listadapter.getItem(idx)
@@ -145,9 +88,15 @@ class Activity : AppCompatActivity() {
 
 class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: ArrayList<AppData>):
         ArrayAdapter<AppData>(ctx, resource, apps) {
+    val cache:HashMap<String, AppData> = hashMapOf<String, AppData>()
     override fun getCount(): Int { return apps.count() }
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
+
+    init {
+        this.update(fetchAppDataArray(ctx))
+    }
+
     fun update(apps: ArrayList<AppData>) {
         this.apps = apps
         this.clear()
@@ -219,25 +168,25 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
                 val eg: Int = g - Color.green(priorColor)
                 val eb: Int = b - Color.blue(priorColor)
 
-                Log.d("fcrow", "${app.name} rbg<$r, $g, $b> deltas<$er,$eg,$eb>...................")
+                //Log.d("fcrow", "${app.name} rbg<$r, $g, $b> deltas<$er,$eg,$eb>...................")
 
                 val delta = er.absoluteValue + eg.absoluteValue + eb.absoluteValue
-                Log.d("fcrow", "delta:$delta.......")
+                //Log.d("fcrow", "delta:$delta.......")
                 if (delta < 100) {
-                    Log.d("fcrow", "delta:$delta below 100================.........")
+                    //Log.d("fcrow", "delta:$delta below 100================.........")
                     if (r + g + b > 220 * 3) {
-                        Log.d("fcrow", "$delta damn white.......")
+                        //Log.d("fcrow", "$delta damn white.......")
                         app.color = Color.rgb(200, 200, 200)
                     } else if (r + g + b < 50) {
                         app.color = Color.rgb(80, 80, 80)
-                        Log.d("fcrow", "$delta damn black.......")
+                        //Log.d("fcrow", "$delta damn black.......")
                     } else {
-                        Log.d("fcrow", "$delta in main.......")
+                        //Log.d("fcrow", "$delta in main.......")
                         fun getAtleast(d:Int, x:Int):Int {
                             var sign = kotlin.math.sign(d.toDouble())
                             if(sign == 0.0) sign = 1.0;
                             val value = (maxOf(d.absoluteValue*2, 80) * sign).toInt()
-                            Log.d("fcrow", "sign: $sign value:$value")
+                            //Log.d("fcrow", "sign: $sign value:$value")
                             val withOrig = value+x
                             val withinBounds = maxOf(minOf(withOrig, 255), 0)
                             return return withinBounds
@@ -245,19 +194,88 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
                         val nr = getAtleast(er, r)
                         val ng = getAtleast(eg, g)
                         val nb = getAtleast(eb, b)
-                        Log.d("fcrow", "${app.name} final color<$nr,$ng,$nb>...................")
+                        //Log.d("fcrow", "${app.name} final color<$nr,$ng,$nb>...................")
                         app.color = Color.rgb(nr, ng, nb)
                     }
                     it.setBackgroundColor(app.color)
                 }
-                Log.d("fcrow", "............................................................................................................")
+                //Log.d("fcrow", "............................................................................................................")
             }
             return it
         } ?: run {
             return inflater.inflate(R.layout.row, null)
         }
     }
+
+    fun fetchAppDataArray(ctx:Context):ArrayList<AppData> {
+        val orderData = fetchOrder(ctx)
+        val pm = ctx.getPackageManager();
+        val searchApp = AppData(ApplicationInfo(), "search", 0x00000000,0, true, null, LayoutType.SEARCH)
+        val items:ArrayList<AppData> = arrayListOf<AppData>()
+        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
+            pm.getLaunchIntentForPackage(app.packageName) != null
+        }.toMutableList<ApplicationInfo>().map {
+            val name = it.loadLabel(pm).toString()
+            val order = orderData[name]?.let {it} ?: run {0}
+            cache.get(name)?.let{
+                it.order = order
+                it.is_pinned = order != 0
+                it
+            } ?:run {
+                val item = AppData(it, name, 0x00000000, order, order != 0, null, LayoutType.APP)
+                cache.put(name, item)
+                item
+            }
+        }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name }))
+        items.add(searchApp)
+        items.addAll(apps)
+        return items
+    }
+
+    fun fetchOrder(ctx:Context): HashMap<String, Int>{
+        val data = hashMapOf<String, Int>()
+        val db = getDb(ctx)
+        val c:Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
+        c?.let {
+            if(c.moveToFirst()){
+                do {
+                    val name=c.getString(c.getColumnIndex("name"))
+                    val pin_order=c.getInt(c.getColumnIndex("pin_order"))
+                    data.put(name, pin_order)
+                } while(c.moveToNext())
+            }
+        }
+        return data
+    }
+
+    fun setOrder(ctx:Context, name:String, pin_order:Int) {
+        val db = getDb(ctx)
+        val vals = ContentValues()
+        vals.put("pin_order", pin_order)
+        vals.put("name", name)
+
+        Log.d("fcrow", "setOrder called $name $pin_order..................................................")
+        if(db.insert( "windmill", null, vals) == -1L)
+            db.rawQuery("update windmill set pin_order = ? where name = ?", arrayOf<String>(pin_order.toString(), name))
+    }
+
+    fun clearOrder(ctx:Context, name:String) {
+        val db = getDb(ctx)
+        Log.d("fcrow", "clear called $name ..................................................")
+        db.delete("windmill","name = ?", arrayOf<String>(name))
+    }
 }
+
+fun getDb(ctx:Context):SQLiteDatabase {
+    Log.d("fcrow", "getDb................................................")
+    return dbh?.let{
+        it.getWritableDatabase()
+    } ?: run {
+        dbh = DBHelper(ctx)
+        return DBHelper(ctx).getWritableDatabase()
+    }
+}
+
 
 class DBHelper(ctx:Context) : SQLiteOpenHelper(ctx, "windmill.db", null, 1) {
 
