@@ -60,23 +60,112 @@ fun getRowColor(icon: Drawable): Int {
     return p.getVibrantColor(0xff000000.toInt())
 }
 
+fun setupAdapter(wmCtx:WmCtx) {
+    wmCtx.layout.setDivider(null)
+    wmCtx.layout.setAdapter(wmCtx.adapter)
+    wmCtx.layout.setOnItemClickListener { parent, view, idx, id ->
+        val app: AppData = wmCtx.adapter.getItem(idx)
+        wmCtx.ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { wmCtx.ctx.startActivity(it) }
+    }
+}
+
+class WmCtx (val ctx:Context, val layout:ListView, val adapter:WMAdapter, val activity:Activity,
+             val update:(search:String) -> Unit,
+             val clear:() -> Unit
+    )
+
+class SearchObj(val input:EditText, val button: ImageView, var getText:() -> String, var setButton:(itemPos:Int) -> Unit)
+
+fun setupSearchObj(bar:LinearLayout):SearchObj {
+    val input = bar.findViewById<EditText>(R.id.search) as EditText;
+    val button = bar.findViewById<EditText>(R.id.search_button) as ImageView;
+    return SearchObj(
+        input,
+        button,
+        // gettext
+        { ->
+            input.text.toString()
+        },
+        //setButton
+        { itemPos ->
+            Log.d("fcrow", "scroll pos :$itemPos......................")
+            if (input.text.length > 0) {
+                button.setImageResource(R.drawable.x_search)
+                Log.d("fcrow", "X......................")
+            } else if (itemPos > 0) {
+                Log.d("fcrow", "up......................")
+                button.setImageResource(R.drawable.up_arrow)
+            } else {
+                Log.d("fcrow", "blank......................")
+                button.setImageResource(R.drawable.blank)
+            }
+        }
+    )
+}
+
+fun addSearchBehavior(obj:SearchObj, bar:LinearLayout) {
+    /*
+    listadapter.subscribe { key, value ->
+        if (key == "scroll") {
+            scrollItemsPos = value
+            setSearchButton()
+        }
+    }
+    */
+     */
+}
+
 class Activity : AppCompatActivity() {
 
     var clearFnc:() -> Unit = { -> {}}
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(instance: Bundle? ) {
         super.onCreate(instance)
         setContentView(R.layout.main)
 
         val layout = findViewById<ListView>(R.id.apps) as ListView
-        layout.setDivider(null)
-        val listadapter = WMAdapter(this, layout, R.layout.row, arrayListOf<AppData>())
-        layout.setAdapter(listadapter)
-        layout.setOnItemClickListener { parent, view, idx, id ->
-            val app: AppData = listadapter.getItem(idx)
-            getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { startActivity(it) }
-        }
+        val adapter = WMAdapter(this, layout, R.layout.row, arrayListOf<AppData>())
+        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout)
+        val wmCtx = WmCtx(this, layout, adapter, this,
+            // update
+            {search ->
+                val apps = fetchAppDataArray(search)
+                adapter.apps = apps
+                adapter.clear()
+                adapter.addAll(apps)
+                adapter.notifyDataSetChanged()
+            },
+            //clear
+            { ->
+                adapter.update(fetchAppDataArray(this))
+                searchObj.input.setText("")
+                searchObj.input.clearFocus()
+                layout.setSelection(0)
+                // if cleared this value is always 0 because we have scrolled to the top
+                searchObj.setButton(0)
+                hideTheFuckingKeyboard(layout)
+            }
+        )
+        setupAdapter(wmCtx)
+
+
+        // layout ist view
+        // list adapter
+        //      -> on scroll
+        //      -> on row click
+        //      -> on pin click
+        // build cell
+        //      (prior color, app data, existing view, set/clear order)
+        // build search
+        //      -> update search handling
+        // search button handling
+        // cache cell
+        // update data
+        // update search
+        // setorder
+        // clearorder
+        // get dbh
+
         buildSearchBar(listadapter)
     }
 
@@ -153,6 +242,30 @@ class Activity : AppCompatActivity() {
     }
 }
 
+
+fun fetchAppDataArray(search:String):ArrayList<AppData> {
+    Log.d("fcrow", "fetchAppDataArray......................................")
+    val orderData = fetchOrder(ctx)
+    val pm = ctx.getPackageManager();
+    val items:ArrayList<AppData> = arrayListOf<AppData>()
+    val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
+        pm.getLaunchIntentForPackage(app.packageName) != null
+    }.toMutableList<ApplicationInfo>().map {
+        val name = it.loadLabel(pm).toString()
+        val order = orderData[name]?.let {it} ?: run {0}
+        cache.get(name)?.let{
+            it.order = order
+            it.is_pinned = order != 0
+            it
+        } ?:run {
+            val item = AppData(it, name, 0x00000000, order, order != 0, null, LayoutType.APP)
+            cache.put(name, item)
+            item
+        }
+    }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name }))
+    items.addAll(apps)
+    return items
+}
 @RequiresApi(Build.VERSION_CODES.M)
 class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: ArrayList<AppData>):
         ArrayAdapter<AppData>(ctx, resource, apps) {
@@ -286,29 +399,6 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
         )
     }
 
-    fun fetchAppDataArray(ctx:Context):ArrayList<AppData> {
-        Log.d("fcrow", "fetchAppDataArray......................................")
-        val orderData = fetchOrder(ctx)
-        val pm = ctx.getPackageManager();
-        val items:ArrayList<AppData> = arrayListOf<AppData>()
-        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
-            pm.getLaunchIntentForPackage(app.packageName) != null
-        }.toMutableList<ApplicationInfo>().map {
-            val name = it.loadLabel(pm).toString()
-            val order = orderData[name]?.let {it} ?: run {0}
-            cache.get(name)?.let{
-                it.order = order
-                it.is_pinned = order != 0
-                it
-            } ?:run {
-                val item = AppData(it, name, 0x00000000, order, order != 0, null, LayoutType.APP)
-                cache.put(name, item)
-                item
-            }
-        }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name }))
-        items.addAll(apps)
-        return items
-    }
 
     fun fetchOrder(ctx:Context): HashMap<String, Int>{
         val data = hashMapOf<String, Int>()
