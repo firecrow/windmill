@@ -172,7 +172,7 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
         }
         app.v?.let {
             val pin_button = it.findViewById(R.id.pin_button) as ImageView
-            val pin_image = if (app.is_pinned) R.drawable.pinned_white else R.drawable.not_pinned_white
+            val pin_image = if (app.is_pinned) R.drawable.not_pinned_graphic else R.drawable.not_pinned_graphic
             pin_button.setImageResource(pin_image)
             pin_button.setOnClickListener { v ->
                 if (!app.is_pinned) {
@@ -239,6 +239,7 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
     }
 
     fun fetchAppDataArray(ctx:Context):ArrayList<AppData> {
+        Log.d("fcrow", "fetchAppDataArray......................................")
         val orderData = fetchOrder(ctx)
         val pm = ctx.getPackageManager();
         val items:ArrayList<AppData> = arrayListOf<AppData>()
@@ -278,6 +279,7 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
     }
 
     fun setOrder(ctx:Context, name:String, pin_order:Int) {
+        Log.d("fcrow", "setOrder $name $pin_order......................................")
         val db = getDb(ctx)
         val vals = ContentValues()
         vals.put("pin_order", pin_order)
@@ -289,6 +291,7 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
     }
 
     fun clearOrder(ctx:Context, name:String) {
+        Log.d("fcrow", "clearOrder $name......................................")
         val db = getDb(ctx)
         Log.d("fcrow", "clear called $name ..................................................")
         db.delete("windmill","name = ?", arrayOf<String>(name))
