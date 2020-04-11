@@ -74,7 +74,7 @@ class Activity : AppCompatActivity() {
             val app: AppData = listadapter.getItem(idx)
             getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { startActivity(it) }
         }
-        buildSearchRow(listadapter)
+        buildSearchBar(listadapter)
     }
 
     override fun onResume(){
@@ -87,8 +87,17 @@ class Activity : AppCompatActivity() {
         super.onPause()
     }
 
-    fun buildSearchRow(listadapter:WMAdapter) {
-        val field = findViewById<EditText>(R.id.search) as EditText;
+    fun buildSearchBar(listadapter:WMAdapter) {
+        val layout = findViewById<ListView>(R.id.apps) as ListView
+        val bar = findViewById<EditText>(R.id.search_bar) as LinearLayout;
+        val field = bar.findViewById<EditText>(R.id.search) as EditText;
+        val button = bar.findViewById<EditText>(R.id.pin_button) as ImageView;
+        button.setOnClickListener{ v ->
+            listadapter.update(listadapter.fetchAppDataArray(this))
+            field.setText("")
+            field.clearFocus()
+            layout.setSelection(0)
+        }
         field.setOnFocusChangeListener{v:View, x:Boolean ->
             Log.d("fcrow", "isSearch $x .......................................")
         }
