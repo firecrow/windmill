@@ -14,6 +14,8 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -81,7 +83,6 @@ class Activity : AppCompatActivity() {
     }
 
     override fun onPause(){
-        /* */
         super.onPause()
     }
 }
@@ -89,6 +90,7 @@ class Activity : AppCompatActivity() {
 class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: ArrayList<AppData>):
         ArrayAdapter<AppData>(ctx, resource, apps) {
     val cache:HashMap<String, AppData> = hashMapOf<String, AppData>()
+    var isSearch: Boolean = false
     override fun getCount(): Int { return apps.count() }
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
@@ -114,16 +116,38 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
     }
 
     fun buildSearchRow(ctx:Context, idx:Int, app: AppData): View {
-        val inflater: LayoutInflater =
-            ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        if (app.v == null) {
-            app.v = inflater.inflate(R.layout.row_search, null)
-            app.v?.let {
-                val inputv = it.findViewById(R.id.search) as EditText
-                return it
+        app.v?.let {
+            return it
+        } ?: run {
+            val inflater: LayoutInflater =
+                ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            Log.d("fcrow", "setting up .........................")
+            val view = inflater.inflate(R.layout.row_search, null)
+            app.v = view
+            val field = view.findViewById<EditText>(R.id.search) as EditText;
+            field.setOnFocusChangeListener{v:View, x:Boolean ->
+                isSearch = x
+                Log.d("fcrow", "isSearch $x .......................................")
             }
+            field.addTextChangedListener(object: TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                }
+
+                override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                    Log.d("text", "$s..........................")
+                    updateSearch(s.toString())
+                }
+
+                override fun afterTextChanged(editable: Editable?) {
+                }
+            }
+
+            )
+            field.setOnKeyListener { v: View, code: Int, event: KeyEvent ->
+                true
+            }
+            return view
         }
-        return  inflater.inflate(R.layout.row_search, null)
     }
 
     fun buildRow(ctx:Context, idx:Int, app: AppData, priorColor: Int): View {
@@ -205,6 +229,13 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
         } ?: run {
             return inflater.inflate(R.layout.row, null)
         }
+    }
+
+    fun updateSearch(query:String):Unit {
+        this.update(ArrayList(fetchAppDataArray(ctx).filter { a ->
+            if (a.type != LayoutType.APP) true;
+            else Regex(query).find(a.name) != null})
+        )
     }
 
     fun fetchAppDataArray(ctx:Context):ArrayList<AppData> {
