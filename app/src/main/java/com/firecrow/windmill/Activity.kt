@@ -172,7 +172,7 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
         }
         app.v?.let {
             val pin_button = it.findViewById(R.id.pin_button) as ImageView
-            val pin_image = if (app.is_pinned) R.drawable.not_pinned_graphic else R.drawable.not_pinned_graphic
+            val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
             pin_button.setImageResource(pin_image)
             pin_button.setOnClickListener { v ->
                 if (!app.is_pinned) {
