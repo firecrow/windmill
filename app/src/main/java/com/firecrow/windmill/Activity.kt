@@ -93,11 +93,34 @@ class Activity : AppCompatActivity() {
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun buildSearchBar(listadapter:WMAdapter) {
         val layout = findViewById<ListView>(R.id.apps) as ListView
         val bar = findViewById<EditText>(R.id.search_bar) as LinearLayout;
         val field = bar.findViewById<EditText>(R.id.search) as EditText;
-        val button = bar.findViewById<EditText>(R.id.pin_button) as ImageView;
+        val button = bar.findViewById<EditText>(R.id.search_button) as ImageView;
+        var scrollItemsPos = 0
+        fun setSearchButton(): Unit{
+            val pos = layout.scrollY
+            Log.d("fcrow", "scroll pos :$scrollItemsPos......................")
+            if(field.text.length > 0){
+                button.setImageResource(R.drawable.x_search)
+                Log.d("fcrow", "X......................")
+            } else if(scrollItemsPos > 0)  {
+                Log.d("fcrow", "up......................")
+                button.setImageResource(R.drawable.up_arrow)
+            } else {
+                Log.d("fcrow", "blank......................")
+                button.setImageResource(R.drawable.blank)
+            }
+
+        }
+        listadapter.subscribe { key, value ->
+            if (key == "scroll") {
+                scrollItemsPos = value
+                setSearchButton()
+            }
+        }
         button.setOnClickListener{ v ->
             listadapter.update(listadapter.fetchAppDataArray(this))
             field.setText("")
@@ -106,14 +129,15 @@ class Activity : AppCompatActivity() {
             hideTheFuckingKeyboard(layout)
         }
         field.setOnFocusChangeListener{v:View, x:Boolean ->
-            Log.d("fcrow", "isSearch $x .......................................")
+            setSearchButton()
         }
         field.addTextChangedListener(object: TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
+            @RequiresApi(Build.VERSION_CODES.M)
             override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                Log.d("text", "$s..........................")
+                setSearchButton()
                 listadapter.updateSearch(s.toString())
             }
 
@@ -126,16 +150,27 @@ class Activity : AppCompatActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.M)
 class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: ArrayList<AppData>):
         ArrayAdapter<AppData>(ctx, resource, apps) {
     val cache:HashMap<String, AppData> = hashMapOf<String, AppData>()
     var isSearch: Boolean = false
+    val listeners = mutableListOf<(key:String, value:Int) -> Unit>()
     override fun getCount(): Int { return apps.count() }
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
 
     init {
         this.update(fetchAppDataArray(ctx))
+        val self = this
+        layout.setOnScrollListener(object: AbsListView.OnScrollListener {
+            override fun onScroll(view: AbsListView, first:Int, visible:Int, total:Int) {
+                self.publish("scroll", first)
+            }
+            override fun onScrollStateChanged(view:AbsListView? , scrollState:Int) {
+
+            }
+        })
     }
 
     fun update(apps: ArrayList<AppData>) {
@@ -149,6 +184,16 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
         return buildRow(ctx, idx, item, priorColor)
+    }
+
+    fun subscribe(listener: (key:String, value:Int) -> Unit){
+        listeners.add(listener)
+    }
+
+    fun publish(key:String, value:Int){
+        listeners.forEach {
+            it(key, value)
+        }
     }
 
     fun buildRow(ctx:Context, idx:Int, app: AppData, priorColor: Int): View {
