@@ -74,6 +74,7 @@ class Activity : AppCompatActivity() {
             val app: AppData = listadapter.getItem(idx)
             getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { startActivity(it) }
         }
+        buildSearchRow(listadapter)
     }
 
     override fun onResume(){
@@ -84,6 +85,28 @@ class Activity : AppCompatActivity() {
 
     override fun onPause(){
         super.onPause()
+    }
+
+    fun buildSearchRow(listadapter:WMAdapter) {
+        val field = findViewById<EditText>(R.id.search) as EditText;
+        field.setOnFocusChangeListener{v:View, x:Boolean ->
+            Log.d("fcrow", "isSearch $x .......................................")
+        }
+        field.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                Log.d("text", "$s..........................")
+                listadapter.updateSearch(s.toString())
+            }
+
+            override fun afterTextChanged(editable: Editable?) {
+            }
+        })
+        field.setOnKeyListener { v: View, code: Int, event: KeyEvent ->
+            true
+        }
     }
 }
 
@@ -109,45 +132,7 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
-        if(item.type == LayoutType.SEARCH) {
-            return buildSearchRow(ctx, idx, item)
-        }
         return buildRow(ctx, idx, item, priorColor)
-    }
-
-    fun buildSearchRow(ctx:Context, idx:Int, app: AppData): View {
-        app.v?.let {
-            return it
-        } ?: run {
-            val inflater: LayoutInflater =
-                ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            Log.d("fcrow", "setting up .........................")
-            val view = inflater.inflate(R.layout.row_search, null)
-            app.v = view
-            val field = view.findViewById<EditText>(R.id.search) as EditText;
-            field.setOnFocusChangeListener{v:View, x:Boolean ->
-                isSearch = x
-                Log.d("fcrow", "isSearch $x .......................................")
-            }
-            field.addTextChangedListener(object: TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                }
-
-                override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                    Log.d("text", "$s..........................")
-                    updateSearch(s.toString())
-                }
-
-                override fun afterTextChanged(editable: Editable?) {
-                }
-            }
-
-            )
-            field.setOnKeyListener { v: View, code: Int, event: KeyEvent ->
-                true
-            }
-            return view
-        }
     }
 
     fun buildRow(ctx:Context, idx:Int, app: AppData, priorColor: Int): View {
@@ -233,15 +218,13 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
 
     fun updateSearch(query:String):Unit {
         this.update(ArrayList(fetchAppDataArray(ctx).filter { a ->
-            if (a.type != LayoutType.APP) true;
-            else Regex(query).find(a.name) != null})
+            Regex(query.toLowerCase()).find(a.name.toLowerCase()) != null})
         )
     }
 
     fun fetchAppDataArray(ctx:Context):ArrayList<AppData> {
         val orderData = fetchOrder(ctx)
         val pm = ctx.getPackageManager();
-        val searchApp = AppData(ApplicationInfo(), "search", 0x00000000,0, true, null, LayoutType.SEARCH)
         val items:ArrayList<AppData> = arrayListOf<AppData>()
         val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
             pm.getLaunchIntentForPackage(app.packageName) != null
@@ -258,7 +241,6 @@ class WMAdapter(val ctx: Context, val layout:ListView, resource: Int, var apps: 
                 item
             }
         }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name }))
-        items.add(searchApp)
         items.addAll(apps)
         return items
     }
