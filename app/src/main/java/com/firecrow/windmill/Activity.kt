@@ -21,6 +21,7 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -87,6 +88,11 @@ class Activity : AppCompatActivity() {
         super.onPause()
     }
 
+    fun hideTheFuckingKeyboard(v:View){
+        val imm =  getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
+    }
+
     fun buildSearchBar(listadapter:WMAdapter) {
         val layout = findViewById<ListView>(R.id.apps) as ListView
         val bar = findViewById<EditText>(R.id.search_bar) as LinearLayout;
@@ -97,6 +103,7 @@ class Activity : AppCompatActivity() {
             field.setText("")
             field.clearFocus()
             layout.setSelection(0)
+            hideTheFuckingKeyboard(layout)
         }
         field.setOnFocusChangeListener{v:View, x:Boolean ->
             Log.d("fcrow", "isSearch $x .......................................")
