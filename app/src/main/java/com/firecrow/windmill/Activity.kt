@@ -62,6 +62,8 @@ fun getRowColor(icon: Drawable): Int {
 
 class Activity : AppCompatActivity() {
 
+    var clearFnc:() -> Unit = { -> {}}
+
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(instance: Bundle? ) {
         super.onCreate(instance)
@@ -79,8 +81,7 @@ class Activity : AppCompatActivity() {
     }
 
     override fun onResume(){
-        val layout = findViewById<ListView>(R.id.apps) as ListView
-        layout.setSelection(0)
+        clearFnc()
         super.onResume()
     }
 
@@ -121,13 +122,15 @@ class Activity : AppCompatActivity() {
                 setSearchButton()
             }
         }
-        button.setOnClickListener{ v ->
+        fun clear(){
             listadapter.update(listadapter.fetchAppDataArray(this))
             field.setText("")
             field.clearFocus()
             layout.setSelection(0)
             hideTheFuckingKeyboard(layout)
         }
+        clearFnc = { -> clear()}
+        button.setOnClickListener{v -> clear()}
         field.setOnFocusChangeListener{v:View, x:Boolean ->
             setSearchButton()
         }
