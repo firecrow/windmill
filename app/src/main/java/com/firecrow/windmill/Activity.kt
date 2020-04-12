@@ -117,7 +117,21 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     })
 }
 
-fun rowBuilder(ctx:Context, update:(query:String) -> Unit): (item:AppData)-> Unit {
+fun rowBuilder(ctx:Context, update:(query:String) -> Unit, orderData:HashMap<String, Int>): (item:AppData)-> Unit {
+    fun refresh() {
+        orderData.clear()
+        val db = getDb(ctx)
+        val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
+        c?.let {
+            if (c.moveToFirst()) {
+                do {
+                    val name = c.getString(c.getColumnIndex("name"))
+                    val pin_order = c.getInt(c.getColumnIndex("pin_order"))
+                    orderData.put(name, pin_order)
+                } while (c.moveToNext())
+            }
+        }
+    }
     fun setupPin(app:AppData) {
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         pin_button.setOnClickListener { v ->
@@ -132,6 +146,7 @@ fun rowBuilder(ctx:Context, update:(query:String) -> Unit): (item:AppData)-> Uni
             } else {
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
+            refresh()
             update("")
         }
     }
@@ -164,9 +179,10 @@ class Activity : AppCompatActivity() {
         setContentView(R.layout.main)
 
         val cache = hashMapOf<String, AppData>()
+        val orderData = hashMapOf<String, Int>()
         val layout = findViewById<ListView>(R.id.apps) as ListView
         val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>())
-        val fetchAppDataArray = buildFetcher(this, layout, cache)
+        val fetchAppDataArray = buildFetcher(this, layout, cache, orderData)
         val update = {search:String ->
             adapter.clear()
             adapter.addAll(fetchAppDataArray(search))
@@ -181,11 +197,7 @@ class Activity : AppCompatActivity() {
 
         val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, reset, update)
         setupLayout(this, layout,adapter, searchObj)
-        adapter.buildRow = rowBuilder(this, update)
-
-
-        val wmCtx = WmCtx( this, layout, adapter, this, searchObj, cache, rowBuilder(this, update), update, reset, fetchAppDataArray)
-        update("")
+        adapter.buildRow = rowBuilder(this, update, orderData)
     }
 
     override fun onResume(){
@@ -203,9 +215,8 @@ class Activity : AppCompatActivity() {
     }
 }
 
-fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>): (query:String) -> ArrayList<AppData> {
+fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, orderData:HashMap<String, Int>): (query:String) -> ArrayList<AppData> {
     return { query:String ->
-        val orderData = fetchOrder(ctx)
         val pm = ctx.getPackageManager();
         val items:ArrayList<AppData> = arrayListOf<AppData>()
         val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
@@ -230,17 +241,17 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>):
 }
 
 
-class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, var buildRow: (item:AppData) -> Unit):
-        ArrayAdapter<AppData>(wmCtx.ctx, resource, apps) {
+class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>):
+        ArrayAdapter<AppData>(ctx, resource, apps) {
     override fun getCount(): Int { return apps.count() }
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
-
+    var buildRow: (item:AppData) -> Unit = {app -> }
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
         if(item.v == null) buildRow(item)
-        updateRow(wmCtx, idx, item, priorColor)
+        updateRow(idx, item, priorColor)
         return item.v
     }
 
@@ -278,7 +289,7 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, va
         return color
     }
 
-    fun updateRow(wmCtx: WmCtx, idx:Int, app: AppData, priorColor:Int): View {
+    fun updateRow(idx:Int, app: AppData, priorColor:Int): View {
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
         pin_button.setImageResource(pin_image)
@@ -312,7 +323,6 @@ fun getDb(ctx:Context):SQLiteDatabase {
         return DBHelper(ctx).getWritableDatabase()
     }
 }
-
 
 class DBHelper(ctx:Context) : SQLiteOpenHelper(ctx, "windmill.db", null, 1) {
 
