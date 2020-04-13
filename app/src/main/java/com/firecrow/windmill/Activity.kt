@@ -219,10 +219,10 @@ class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderDa
         iconv.setImageDrawable(icon)
         app.color = getRowColor(icon)
         row.setBackgroundColor(app.color)
-        setupPin(app)
         val isN = row == null
         Log.d("fcrow", "buildRow $isN")
         app.v = row
+        setupPin(app)
     }
 
     fun updateRow(idx:Int, app: AppData, priorColor:Int): View {
@@ -244,13 +244,17 @@ class Activity : AppCompatActivity() {
         val cache = hashMapOf<String, AppData>()
         val orderData = hashMapOf<String, Int>()
         val layout = findViewById<ListView>(R.id.apps) as ListView
+        val blank = View(this)
 
         val rowBuilder = RowBuilder(this, {str ->}, orderData)
-        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder)
-        val fetchAppDataArray = buildFetcher(this, layout, cache, orderData)
-        val lifecycle = LifeCycle(layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
-        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, reset, lifecycle::update)
+        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder,blank)
+        val fetchAppDataArray = buildFetcher(this, layout, cache, orderData, blank)
+        val len = fetchAppDataArray("").count()
+        Log.d("fcrow", "len: $len>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        val lifeCycle = LifeCycle(layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
+        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, reset, lifeCycle::update)
         setupLayout(this, layout,adapter, searchObj)
+        lifeCycle.update("")
     }
 
     override fun onResume(){
@@ -268,7 +272,7 @@ class Activity : AppCompatActivity() {
     }
 }
 
-fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, orderData:HashMap<String, Int>): (query:String) -> ArrayList<AppData> {
+fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, orderData:HashMap<String, Int>, blank:View): (query:String) -> ArrayList<AppData> {
     return { query:String ->
         val pm = ctx.getPackageManager();
         val items:ArrayList<AppData> = arrayListOf<AppData>()
@@ -282,7 +286,7 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, 
                 it.is_pinned = order != 0
                 it
             } ?:run {
-                val item = AppData(it, name, 0x00000000, order, order != 0, layout, LayoutType.APP)
+                val item = AppData(it, name, 0x00000000, order, order != 0, blank, LayoutType.APP)
                 cache.put(name, item)
                 item
             }
@@ -294,15 +298,20 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, 
 }
 
 
-class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, val rowBuilder:RowBuilder):
+class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, val rowBuilder:RowBuilder, val blank:View):
         ArrayAdapter<AppData>(ctx, resource, apps) {
     override fun getCount(): Int { return apps.count() }
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
+        Log.d("fcrow", "getView $idx >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
-        if(item.v == null) rowBuilder.buildRow(item)
+        Log.d("fcrow", "getView  ${item.name} >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        if(item.v == blank){
+            Log.d( "fcrow", "getView needs building ${item.name}-----------------------------------" )
+            rowBuilder.buildRow(item)
+        }
         rowBuilder.updateRow(idx, item, priorColor)
         return item.v
     }
