@@ -254,6 +254,7 @@ class Activity : AppCompatActivity() {
         val lifeCycle = LifeCycle(layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
         val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, reset, lifeCycle::update)
         setupLayout(this, layout,adapter, searchObj)
+        rowBuilder.refresh()
         lifeCycle.update("")
     }
 
