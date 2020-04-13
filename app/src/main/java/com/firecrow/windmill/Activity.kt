@@ -3,6 +3,7 @@ package com.firecrow.windmill
 import android.Manifest
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -95,7 +96,9 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     layout.setAdapter(adapter)
     layout.setOnItemClickListener { parent, view, idx, id ->
         val app: AppData = adapter.getItem(idx)
-        ctx.getPackageManager().getLaunchIntentForPackage(app.name)?.let { ctx.startActivity(it) }
+        val isNull = ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName) == null
+        Log.d("fcrow","clicked ${app.name}||||||$isNull|||||||||||||||||||||||||||||||||||||")
+        ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { ctx.startActivity(it) }
     }
     layout.setOnScrollListener(object: AbsListView.OnScrollListener {
         override fun onScroll(view: AbsListView, first:Int, visible:Int, total:Int) {
