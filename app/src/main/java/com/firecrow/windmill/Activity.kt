@@ -49,16 +49,9 @@ class AppData (
     var v:View,
     val type: LayoutType);
 
-class WmCtx (val ctx:Context, val layout:ListView, val adapter:WMAdapter, val activity:Activity,
-             val cache:HashMap<String, AppData>,
-             val searchObj:SearchObj,
-             val update:(search:String) -> Unit,
-             val reset:() -> Unit
-)
-
 class SearchObj(val input:EditText, val button: ImageView, var getText:() -> String, var setButton:(itemPos:Int) -> Unit)
 
-fun setupSearchObj(bar:LinearLayout, reset: () -> Unit, updateSearch:(query:String)->Unit):SearchObj {
+fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
     val input = bar.findViewById<EditText>(R.id.search) as EditText;
     val button = bar.findViewById<EditText>(R.id.search_button) as ImageView;
 
@@ -71,8 +64,10 @@ fun setupSearchObj(bar:LinearLayout, reset: () -> Unit, updateSearch:(query:Stri
             button.setImageResource(R.drawable.blank)
         }
     }
+
     button.setOnClickListener{v ->
-        reset()
+        Log.d("fcrow", "button clieck.....................................................")
+        lifeCycle.reset()
         setButton(0)
         input.setText("")
         input.clearFocus()
@@ -82,9 +77,12 @@ fun setupSearchObj(bar:LinearLayout, reset: () -> Unit, updateSearch:(query:Stri
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
         override fun afterTextChanged(editable: Editable?) {}
         override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
-            reset()
-            setButton(0)
-            updateSearch(s.toString())
+            if(s.toString() != "") {
+                Log.d("fcrow","s $s//////////////////////////////////////////////////////////////////////")
+                lifeCycle.reset()
+                setButton(0)
+                lifeCycle.update(s.toString())
+            }
         }
     })
     val getText = { -> input.text.toString()}
@@ -96,8 +94,6 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     layout.setAdapter(adapter)
     layout.setOnItemClickListener { parent, view, idx, id ->
         val app: AppData = adapter.getItem(idx)
-        val isNull = ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName) == null
-        Log.d("fcrow","clicked ${app.name}||||||$isNull|||||||||||||||||||||||||||||||||||||")
         ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { ctx.startActivity(it) }
     }
     layout.setOnScrollListener(object: AbsListView.OnScrollListener {
@@ -110,7 +106,6 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     })
 }
 
-
 class LifeCycle(val layout:ListView, val adapter:WMAdapter, val fetchAppDataArray:(String) -> ArrayList<AppData>, val hideKb:(layout:ListView)->Unit, rowBuilder:RowBuilder){
     init {
         rowBuilder.update = ::update
@@ -122,7 +117,7 @@ class LifeCycle(val layout:ListView, val adapter:WMAdapter, val fetchAppDataArra
     }
     fun reset() {
         update("")
-        // if cleared this value is always 0 because we have scrolled to the top
+        Log.d("fcrow","setting selection to 0 ______________________________________________________________!")
         layout.setSelection(0)
         hideKb(layout)
     }
@@ -194,7 +189,6 @@ class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderDa
                     var sign = kotlin.math.sign(d.toDouble())
                     if(sign == 0.0) sign = 1.0;
                     val value = (maxOf(d.absoluteValue*2, 80) * sign).toInt()
-                    //Log.d("fcrow", "sign: $sign value:$value")
                     val withOrig = value+x
                     val withinBounds = maxOf(minOf(withOrig, 255), 0)
                     return return withinBounds
@@ -223,7 +217,6 @@ class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderDa
         app.color = getRowColor(icon)
         row.setBackgroundColor(app.color)
         val isN = row == null
-        Log.d("fcrow", "buildRow $isN")
         app.v = row
         setupPin(app)
     }
@@ -238,7 +231,7 @@ class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderDa
 }
 
 class Activity : AppCompatActivity() {
-    var reset:() -> Unit = {->}
+    var life:LifeCycle? = null
 
     override fun onCreate(instance: Bundle? ) {
         super.onCreate(instance)
@@ -252,17 +245,16 @@ class Activity : AppCompatActivity() {
         val rowBuilder = RowBuilder(this, {str ->}, orderData)
         val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder,blank)
         val fetchAppDataArray = buildFetcher(this, layout, cache, orderData, blank)
-        val len = fetchAppDataArray("").count()
-        Log.d("fcrow", "len: $len>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         val lifeCycle = LifeCycle(layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
-        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, reset, lifeCycle::update)
+        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, lifeCycle)
         setupLayout(this, layout,adapter, searchObj)
         rowBuilder.refresh()
         lifeCycle.update("")
+        life = lifeCycle
     }
 
     override fun onResume(){
-        reset()
+        life?.let{it.reset()}
         super.onResume()
     }
 
@@ -308,12 +300,9 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, va
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
-        Log.d("fcrow", "getView $idx >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
-        Log.d("fcrow", "getView  ${item.name} >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         if(item.v == blank){
-            Log.d( "fcrow", "getView needs building ${item.name}-----------------------------------" )
             rowBuilder.buildRow(item)
         }
         rowBuilder.updateRow(idx, item, priorColor)
@@ -338,7 +327,6 @@ fun fetchOrder(ctx:Context): HashMap<String, Int>{
 }
 
 fun getDb(ctx:Context):SQLiteDatabase {
-    Log.d("fcrow", "getDb................................................")
     return dbh?.let{
         it.getWritableDatabase()
     } ?: run {
