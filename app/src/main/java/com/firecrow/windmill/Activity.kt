@@ -79,9 +79,9 @@ fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
         override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
             if(s.toString() != "") {
                 Log.d("fcrow","s $s//////////////////////////////////////////////////////////////////////")
-                lifeCycle.reset()
-                setButton(0)
                 lifeCycle.update(s.toString())
+                setButton(0)
+                lifeCycle.scrollTop()
             }
         }
     })
@@ -115,10 +115,14 @@ class LifeCycle(val layout:ListView, val adapter:WMAdapter, val fetchAppDataArra
         adapter.addAll(fetchAppDataArray(search))
         adapter.notifyDataSetChanged()
     }
+    fun scrollTop(){
+        Log.d("fcrow","scrollTop1111111111111111111111111111111111111111111")
+        layout.setSelection(0)
+    }
     fun reset() {
         update("")
         Log.d("fcrow","setting selection to 0 ______________________________________________________________!")
-        layout.setSelection(0)
+        scrollTop()
         hideKb(layout)
     }
 }
