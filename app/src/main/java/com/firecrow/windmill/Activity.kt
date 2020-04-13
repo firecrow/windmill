@@ -57,16 +57,6 @@ class WmCtx (val ctx:Context, val layout:ListView, val adapter:WMAdapter, val ac
 
 class SearchObj(val input:EditText, val button: ImageView, var getText:() -> String, var setButton:(itemPos:Int) -> Unit)
 
-fun getRowColor(icon: Drawable): Int {
-    val iconb: Bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
-    val canvas: Canvas = Canvas(iconb)
-    icon.setBounds(0, 0, 10, 10)
-    icon.draw(canvas)
-
-    val p: Palette = Palette.from(iconb).generate()
-    return p.getVibrantColor(0xff000000.toInt())
-}
-
 fun setupSearchObj(bar:LinearLayout, reset: () -> Unit, updateSearch:(query:String)->Unit):SearchObj {
     val input = bar.findViewById<EditText>(R.id.search) as EditText;
     val button = bar.findViewById<EditText>(R.id.search_button) as ImageView;
@@ -117,7 +107,26 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     })
 }
 
-fun rowBuilder(ctx:Context, update:(query:String) -> Unit, orderData:HashMap<String, Int>): (item:AppData)-> Unit {
+
+class LifeCycle(val layout:ListView, val adapter:WMAdapter, val fetchAppDataArray:(String) -> ArrayList<AppData>, val hideKb:(layout:ListView)->Unit, rowBuilder:RowBuilder){
+    init {
+        rowBuilder.update = ::update
+    }
+    fun update(search:String) {
+        adapter.clear()
+        adapter.addAll(fetchAppDataArray(search))
+        adapter.notifyDataSetChanged()
+    }
+    fun reset() {
+        update("")
+        // if cleared this value is always 0 because we have scrolled to the top
+        layout.setSelection(0)
+        hideKb(layout)
+    }
+}
+
+
+class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderData:HashMap<String, Int>) {
     fun refresh() {
         orderData.clear()
         val db = getDb(ctx)
@@ -132,6 +141,7 @@ fun rowBuilder(ctx:Context, update:(query:String) -> Unit, orderData:HashMap<Str
             }
         }
     }
+
     fun setupPin(app:AppData) {
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         pin_button.setOnClickListener { v ->
@@ -151,108 +161,14 @@ fun rowBuilder(ctx:Context, update:(query:String) -> Unit, orderData:HashMap<Str
         }
     }
 
-    return {app:AppData ->
-        val inflater: LayoutInflater =
-            ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val row = inflater.inflate(R.layout.row, null)
-        val pm = ctx.getPackageManager()
+    fun getRowColor(icon: Drawable): Int {
+        val iconb: Bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
+        val canvas: Canvas = Canvas(iconb)
+        icon.setBounds(0, 0, 10, 10)
+        icon.draw(canvas)
 
-        val namev = row.findViewById(R.id.appname) as TextView
-        namev.setText(app.name)
-        namev.setTextColor(Color.WHITE)
-
-        val icon = app.appInfo.loadIcon(pm)
-        val iconv = row.findViewById(R.id.icon) as ImageView
-        iconv.setImageDrawable(icon)
-        app.color = getRowColor(icon)
-        row.setBackgroundColor(app.color)
-        setupPin(app)
-        app.v = row
-    }
-}
-
-class Activity : AppCompatActivity() {
-    var reset:() -> Unit = {->}
-
-    override fun onCreate(instance: Bundle? ) {
-        super.onCreate(instance)
-        setContentView(R.layout.main)
-
-        val cache = hashMapOf<String, AppData>()
-        val orderData = hashMapOf<String, Int>()
-        val layout = findViewById<ListView>(R.id.apps) as ListView
-        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>())
-        val fetchAppDataArray = buildFetcher(this, layout, cache, orderData)
-        val update = {search:String ->
-            adapter.clear()
-            adapter.addAll(fetchAppDataArray(search))
-            adapter.notifyDataSetChanged()
-        }
-        reset = { ->
-            update("")
-            // if cleared this value is always 0 because we have scrolled to the top
-            layout.setSelection(0)
-            hideTheFuckingKeyboard(layout)
-        }
-
-        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, reset, update)
-        setupLayout(this, layout,adapter, searchObj)
-        adapter.buildRow = rowBuilder(this, update, orderData)
-    }
-
-    override fun onResume(){
-        reset()
-        super.onResume()
-    }
-
-    override fun onPause(){
-        super.onPause()
-    }
-
-    fun hideTheFuckingKeyboard(v:View){
-        val imm =  getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
-    }
-}
-
-fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, orderData:HashMap<String, Int>): (query:String) -> ArrayList<AppData> {
-    return { query:String ->
-        val pm = ctx.getPackageManager();
-        val items:ArrayList<AppData> = arrayListOf<AppData>()
-        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
-            pm.getLaunchIntentForPackage(app.packageName) != null
-        }.toMutableList<ApplicationInfo>().map {
-            val name = it.loadLabel(pm).toString()
-            val order = orderData[name]?.let {it} ?: run {0}
-            cache.get(name)?.let{
-                it.order = order
-                it.is_pinned = order != 0
-                it
-            } ?:run {
-                val item = AppData(it, name, 0x00000000, order, order != 0, layout, LayoutType.APP)
-                cache.put(name, item)
-                item
-            }
-        }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name })).filter { a ->
-            Regex(query.toLowerCase()).find(a.name.toLowerCase()) != null}
-        items.addAll(apps)
-        items
-    }
-}
-
-
-class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>):
-        ArrayAdapter<AppData>(ctx, resource, apps) {
-    override fun getCount(): Int { return apps.count() }
-    override fun getItem(idx: Int): AppData { return apps.get(idx) }
-    override fun getItemId(idx: Int): Long { return idx.toLong() }
-    var buildRow: (item:AppData) -> Unit = {app -> }
-    override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
-        val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
-        val item = getItem(idx)
-        if(item.v == null) buildRow(item)
-        updateRow(idx, item, priorColor)
-        return item.v
+        val p: Palette = Palette.from(iconb).generate()
+        return p.getVibrantColor(0xff000000.toInt())
     }
 
     fun defineAlternateColor(color:Int, priorColor:Int): Int{
@@ -289,12 +205,106 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>):
         return color
     }
 
+    fun buildRow (app:AppData) {
+        val inflater: LayoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val row = inflater.inflate(R.layout.row, null)
+        val pm = ctx.getPackageManager()
+
+        val namev = row.findViewById(R.id.appname) as TextView
+        namev.setText(app.name)
+        namev.setTextColor(Color.WHITE)
+
+        val icon = app.appInfo.loadIcon(pm)
+        val iconv = row.findViewById(R.id.icon) as ImageView
+        iconv.setImageDrawable(icon)
+        app.color = getRowColor(icon)
+        row.setBackgroundColor(app.color)
+        setupPin(app)
+        val isN = row == null
+        Log.d("fcrow", "buildRow $isN")
+        app.v = row
+    }
+
     fun updateRow(idx:Int, app: AppData, priorColor:Int): View {
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
         pin_button.setImageResource(pin_image)
         if(idx > 0) app.color = defineAlternateColor(app.color, priorColor)
         return app.v
+    }
+}
+
+class Activity : AppCompatActivity() {
+    var reset:() -> Unit = {->}
+
+    override fun onCreate(instance: Bundle? ) {
+        super.onCreate(instance)
+        setContentView(R.layout.main)
+
+        val cache = hashMapOf<String, AppData>()
+        val orderData = hashMapOf<String, Int>()
+        val layout = findViewById<ListView>(R.id.apps) as ListView
+
+        val rowBuilder = RowBuilder(this, {str ->}, orderData)
+        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder)
+        val fetchAppDataArray = buildFetcher(this, layout, cache, orderData)
+        val lifecycle = LifeCycle(layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
+        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, reset, lifecycle::update)
+        setupLayout(this, layout,adapter, searchObj)
+    }
+
+    override fun onResume(){
+        reset()
+        super.onResume()
+    }
+
+    override fun onPause(){
+        super.onPause()
+    }
+
+    fun hideKb(v:View){
+        val imm =  getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
+    }
+}
+
+fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, orderData:HashMap<String, Int>): (query:String) -> ArrayList<AppData> {
+    return { query:String ->
+        val pm = ctx.getPackageManager();
+        val items:ArrayList<AppData> = arrayListOf<AppData>()
+        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
+            pm.getLaunchIntentForPackage(app.packageName) != null
+        }.toMutableList<ApplicationInfo>().map {
+            val name = it.loadLabel(pm).toString()
+            val order = orderData[name]?.let {it} ?: run {0}
+            cache.get(name)?.let{
+                it.order = order
+                it.is_pinned = order != 0
+                it
+            } ?:run {
+                val item = AppData(it, name, 0x00000000, order, order != 0, layout, LayoutType.APP)
+                cache.put(name, item)
+                item
+            }
+        }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name })).filter { a ->
+            Regex(query.toLowerCase()).find(a.name.toLowerCase()) != null}
+        items.addAll(apps)
+        items
+    }
+}
+
+
+class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, val rowBuilder:RowBuilder):
+        ArrayAdapter<AppData>(ctx, resource, apps) {
+    override fun getCount(): Int { return apps.count() }
+    override fun getItem(idx: Int): AppData { return apps.get(idx) }
+    override fun getItemId(idx: Int): Long { return idx.toLong() }
+    override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
+        val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
+        val item = getItem(idx)
+        if(item.v == null) rowBuilder.buildRow(item)
+        rowBuilder.updateRow(idx, item, priorColor)
+        return item.v
     }
 }
 
