@@ -151,6 +151,7 @@ class RowBuilder(val ctx:Context) {
                 Log.d("fcrow","${app.name}: delete setting pin to 1 ${app.is_pinned}")
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
+            db.close()
             lifeCycle?.let{it.update("")}
         }
     }
@@ -279,7 +280,9 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, 
                     orderData.put(name, pin_order)
                 } while (c.moveToNext())
             }
+            c.close()
         }
+        db.close()
         Log.d("fcrow", "refreshing order........... count: ${orderData.count()}")
         return orderData
     }
@@ -337,7 +340,9 @@ fun fetchOrder(ctx:Context): HashMap<String, Int>{
                 data.put(name, pin_order)
             } while(c.moveToNext())
         }
+        c.close()
     }
+    db.close()
     return data
 }
 
