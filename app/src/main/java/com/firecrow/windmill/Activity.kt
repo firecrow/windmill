@@ -139,16 +139,16 @@ class RowBuilder(val ctx:Context) {
                 vals.put("pin_order", 1)
                 vals.put("name", app.name)
 
-                //Log.d("fcrow","${app.name}: insert setting pin to 1 ${app.is_pinned}")
+                Log.d("fcrow","${app.name}: insert setting pin to 1 ${app.is_pinned}")
                 if(db.insert( "windmill", null, vals) == -1L) {
-                    //Log.d("fcrow","${app.name}: update setting pin to 1 ${app.is_pinned}")
+                    Log.d("fcrow","${app.name}: update setting pin to 1 ${app.is_pinned}")
                     db.rawQuery(
                         "update windmill set pin_order = ? where name = ?",
                         arrayOf<String>(1.toString(), app.name)
                     )
                 }
             } else {
-                //Log.d("fcrow","${app.name}: delete setting pin to 1 ${app.is_pinned}")
+                Log.d("fcrow","${app.name}: delete setting pin to 1 ${app.is_pinned}")
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
             lifeCycle?.let{it.update("")}
@@ -226,7 +226,7 @@ class RowBuilder(val ctx:Context) {
         }
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
-        //Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
+        Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
         pin_button.setImageResource(pin_image)
         val newColor = defineAlternateColor(app.color, priorColor)
 
@@ -282,6 +282,7 @@ class Activity : AppCompatActivity() {
 
 fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, blank:View): (query:String) -> ArrayList<AppData> {
     fun refreshOrder(): HashMap<String, Int> {
+        Log.d("fcrow", "refreshing order...........")
         val orderData = hashMapOf<String, Int>()
         val db = getDb(ctx)
         val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
@@ -294,6 +295,7 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, 
                 } while (c.moveToNext())
             }
         }
+        Log.d("fcrow", "refreshing order........... count: ${orderData.count()}")
         return orderData
     }
     return { query:String ->
