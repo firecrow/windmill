@@ -166,33 +166,18 @@ class RowBuilder(val ctx:Context) {
     }
 
     fun defineAlternateColor(color:Int, priorColor:Int): Int{
-        val r = Color.red(color)
-        val g = Color.green(color)
-        val b = Color.blue(color)
+        var r = Color.red(color)
+        var g = Color.green(color)
+        var b = Color.blue(color)
 
-        val er: Int = r - Color.red(priorColor)
-        val eg: Int = g - Color.green(priorColor)
-        val eb: Int = b - Color.blue(priorColor)
-
-        val delta = er.absoluteValue + eg.absoluteValue + eb.absoluteValue
-        if (delta < 100) {
-            if (r + g + b > 220 * 3) {
-                return Color.rgb(200, 200, 200)
-            } else if (r + g + b < 50) {
-                return Color.rgb(80, 80, 80)
-            } else {
-                fun getAtleast(d:Int, x:Int):Int {
-                    var sign = kotlin.math.sign(d.toDouble())
-                    if(sign == 0.0) sign = 1.0;
-                    val value = (maxOf(d.absoluteValue, 50) * sign).toInt()
-                    val withOrig = value+x
-                    val withinBounds = maxOf(minOf(withOrig, 255), 0)
-                    return return withinBounds
-                }
-                val nr = getAtleast(er, r)
-                val ng = getAtleast(eg, g)
-                val nb = getAtleast(eb, b)
-                return Color.rgb(nr, ng, nb)
+        var pr = Color.red(priorColor)
+        var pg = Color.green(priorColor)
+        var pb = Color.blue(priorColor)
+        if(((r-pr).absoluteValue + (g-pg).absoluteValue + (b-pb).absoluteValue) < 100) {
+            if (r > 220 || g > 220 || b > 220 || r + g + b > 140 * 3) {//Darken
+                return Color.rgb(maxOf(r - 40, 0), maxOf(g - 40, 0), maxOf(b - 40, 0))
+            } else {//Lighten
+                return Color.rgb(minOf(r + 40, 255), minOf(g + 40, 255), minOf(b + 40, 255))
             }
         }
         return color
