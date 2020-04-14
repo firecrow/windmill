@@ -175,9 +175,9 @@ class RowBuilder(val ctx:Context) {
         var pb = Color.blue(priorColor)
         if(((r-pr).absoluteValue + (g-pg).absoluteValue + (b-pb).absoluteValue) < 100) {
             if (r > 220 || g > 220 || b > 220 || r + g + b > 140 * 3) {//Darken
-                return Color.rgb(maxOf(r - 40, 0), maxOf(g - 40, 0), maxOf(b - 40, 0))
+                return Color.rgb(maxOf(pr - 40, 0), maxOf(pg - 40, 0), maxOf(pb - 40, 0))
             } else {//Lighten
-                return Color.rgb(minOf(r + 40, 255), minOf(g + 40, 255), minOf(b + 40, 255))
+                return Color.rgb(minOf(pr + 40, 255), minOf(pg + 40, 255), minOf(pb + 40, 255))
             }
         }
         return color
