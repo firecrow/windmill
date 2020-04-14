@@ -74,7 +74,6 @@ fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
         override fun afterTextChanged(editable: Editable?) {}
         override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
             if(s.toString() != "") {
-                Log.d("fcrow","s $s//////////////////////////////////////////////////////////////////////")
                 lifeCycle.update(s.toString())
                 setButton(0)
                 lifeCycle.scrollTop()
@@ -140,16 +139,16 @@ class RowBuilder(val ctx:Context) {
                 vals.put("pin_order", 1)
                 vals.put("name", app.name)
 
-                Log.d("fcrow","${app.name}: insert setting pin to 1 ${app.is_pinned}")
+                //Log.d("fcrow","${app.name}: insert setting pin to 1 ${app.is_pinned}")
                 if(db.insert( "windmill", null, vals) == -1L) {
-                    Log.d("fcrow","${app.name}: update setting pin to 1 ${app.is_pinned}")
+                    //Log.d("fcrow","${app.name}: update setting pin to 1 ${app.is_pinned}")
                     db.rawQuery(
                         "update windmill set pin_order = ? where name = ?",
                         arrayOf<String>(1.toString(), app.name)
                     )
                 }
             } else {
-                Log.d("fcrow","${app.name}: delete setting pin to 1 ${app.is_pinned}")
+                //Log.d("fcrow","${app.name}: delete setting pin to 1 ${app.is_pinned}")
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
             lifeCycle?.let{it.update("")}
@@ -185,7 +184,7 @@ class RowBuilder(val ctx:Context) {
                 fun getAtleast(d:Int, x:Int):Int {
                     var sign = kotlin.math.sign(d.toDouble())
                     if(sign == 0.0) sign = 1.0;
-                    val value = (maxOf(d.absoluteValue*2, 80) * sign).toInt()
+                    val value = (maxOf(d.absoluteValue, 50) * sign).toInt()
                     val withOrig = value+x
                     val withinBounds = maxOf(minOf(withOrig, 255), 0)
                     return return withinBounds
@@ -219,11 +218,28 @@ class RowBuilder(val ctx:Context) {
     }
 
     fun updateRow(idx:Int, app: AppData, priorColor:Int): View {
+        fun colorToString(color:Int):String {
+            val red = Color.red(color)
+            val green = Color.green(color)
+            val blue = Color.blue(color)
+            return "rgb($red,$green,$blue)"
+        }
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
-        Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
+        //Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
         pin_button.setImageResource(pin_image)
-        if(idx > 0) app.color = defineAlternateColor(app.color, priorColor)
+        val newColor = defineAlternateColor(app.color, priorColor)
+
+        val colorStr = colorToString(app.color)
+        val priorColorStr = colorToString(priorColor)
+        val newColorStr = colorToString(newColor)
+        val same = colorStr == newColorStr;
+        Log.d("fcrow","${app.name} | same:$same priorColor:$priorColorStr color: $colorStr alternateColor: $newColorStr")
+
+        if(idx > 0 && app.color != newColor){
+            app.color = newColor
+            app.v.setBackgroundColor(newColor)
+        }
         return app.v
     }
 }
