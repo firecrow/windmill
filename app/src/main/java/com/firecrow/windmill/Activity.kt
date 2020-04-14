@@ -66,11 +66,7 @@ fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
     }
 
     button.setOnClickListener{v ->
-        Log.d("fcrow", "button clieck.....................................................")
         lifeCycle.reset()
-        setButton(0)
-        input.setText("")
-        input.clearFocus()
     }
 
     input.addTextChangedListener(object: TextWatcher {
@@ -86,7 +82,9 @@ fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
         }
     })
     val getText = { -> input.text.toString()}
-    return  SearchObj( input, button,  getText, setButton )
+    val obj =   SearchObj( input, button,  getText, setButton )
+    lifeCycle.searchObj = obj
+    return obj
 }
 
 fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:SearchObj){
@@ -106,9 +104,10 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     })
 }
 
-class LifeCycle(val layout:ListView, val adapter:WMAdapter, val fetchAppDataArray:(String) -> ArrayList<AppData>, val hideKb:(layout:ListView)->Unit, rowBuilder:RowBuilder){
+class LifeCycle(ctx:Context, val layout:ListView, val adapter:WMAdapter, val fetchAppDataArray:(String) -> ArrayList<AppData>, val hideKb:(View)->Unit, rowBuilder:RowBuilder){
+    var searchObj:SearchObj? = null
     init {
-        rowBuilder.update = ::update
+        rowBuilder.lifeCycle = this
     }
     fun update(search:String) {
         adapter.clear()
@@ -116,33 +115,21 @@ class LifeCycle(val layout:ListView, val adapter:WMAdapter, val fetchAppDataArra
         adapter.notifyDataSetChanged()
     }
     fun scrollTop(){
-        Log.d("fcrow","scrollTop1111111111111111111111111111111111111111111")
         layout.setSelection(0)
     }
     fun reset() {
-        update("")
-        Log.d("fcrow","setting selection to 0 ______________________________________________________________!")
-        scrollTop()
+        searchObj?.let {
+            it.input.setText("")
+            it.input.clearFocus()
+        }
         hideKb(layout)
+        update("")
+        scrollTop()
     }
 }
 
-
-class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderData:HashMap<String, Int>) {
-    fun refresh() {
-        orderData.clear()
-        val db = getDb(ctx)
-        val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
-        c?.let {
-            if (c.moveToFirst()) {
-                do {
-                    val name = c.getString(c.getColumnIndex("name"))
-                    val pin_order = c.getInt(c.getColumnIndex("pin_order"))
-                    orderData.put(name, pin_order)
-                } while (c.moveToNext())
-            }
-        }
-    }
+class RowBuilder(val ctx:Context) {
+    var lifeCycle:LifeCycle? = null
 
     fun setupPin(app:AppData) {
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
@@ -153,13 +140,19 @@ class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderDa
                 vals.put("pin_order", 1)
                 vals.put("name", app.name)
 
-                if(db.insert( "windmill", null, vals) == -1L)
-                    db.rawQuery("update windmill set pin_order = ? where name = ?", arrayOf<String>(1.toString(), app.name))
+                Log.d("fcrow","${app.name}: insert setting pin to 1 ${app.is_pinned}")
+                if(db.insert( "windmill", null, vals) == -1L) {
+                    Log.d("fcrow","${app.name}: update setting pin to 1 ${app.is_pinned}")
+                    db.rawQuery(
+                        "update windmill set pin_order = ? where name = ?",
+                        arrayOf<String>(1.toString(), app.name)
+                    )
+                }
             } else {
+                Log.d("fcrow","${app.name}: delete setting pin to 1 ${app.is_pinned}")
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
-            refresh()
-            update("")
+            lifeCycle?.let{it.update("")}
         }
     }
 
@@ -228,6 +221,7 @@ class RowBuilder(val ctx:Context, var update:(query:String) -> Unit, val orderDa
     fun updateRow(idx:Int, app: AppData, priorColor:Int): View {
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
+        Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
         pin_button.setImageResource(pin_image)
         if(idx > 0) app.color = defineAlternateColor(app.color, priorColor)
         return app.v
@@ -242,17 +236,15 @@ class Activity : AppCompatActivity() {
         setContentView(R.layout.main)
 
         val cache = hashMapOf<String, AppData>()
-        val orderData = hashMapOf<String, Int>()
         val layout = findViewById<ListView>(R.id.apps) as ListView
         val blank = View(this)
 
-        val rowBuilder = RowBuilder(this, {str ->}, orderData)
+        val rowBuilder = RowBuilder(this)
         val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder,blank)
-        val fetchAppDataArray = buildFetcher(this, layout, cache, orderData, blank)
-        val lifeCycle = LifeCycle(layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
+        val fetchAppDataArray = buildFetcher(this, layout, cache, blank)
+        val lifeCycle = LifeCycle(this, layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
         val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, lifeCycle)
         setupLayout(this, layout,adapter, searchObj)
-        rowBuilder.refresh()
         lifeCycle.update("")
         life = lifeCycle
     }
@@ -272,8 +264,24 @@ class Activity : AppCompatActivity() {
     }
 }
 
-fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, orderData:HashMap<String, Int>, blank:View): (query:String) -> ArrayList<AppData> {
+fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, blank:View): (query:String) -> ArrayList<AppData> {
+    fun refreshOrder(): HashMap<String, Int> {
+        val orderData = hashMapOf<String, Int>()
+        val db = getDb(ctx)
+        val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
+        c?.let {
+            if (c.moveToFirst()) {
+                do {
+                    val name = c.getString(c.getColumnIndex("name"))
+                    val pin_order = c.getInt(c.getColumnIndex("pin_order"))
+                    orderData.put(name, pin_order)
+                } while (c.moveToNext())
+            }
+        }
+        return orderData
+    }
     return { query:String ->
+        val orderData = refreshOrder()
         val pm = ctx.getPackageManager();
         val items:ArrayList<AppData> = arrayListOf<AppData>()
         val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
