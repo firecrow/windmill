@@ -1,9 +1,7 @@
 package com.firecrow.windmill
 
-import android.Manifest
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -13,25 +11,18 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.graphics.blue
 import androidx.palette.graphics.Palette
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.math.absoluteValue
-import kotlin.collections.List
 
 var dbh:DBHelper? = null
 
@@ -128,27 +119,8 @@ class LifeCycle(ctx:Context, val layout:ListView, val adapter:WMAdapter, val fet
 class RowBuilder(val ctx:Context) {
     var lifeCycle:LifeCycle? = null
 
-    fun setupPin(app:AppData) {
-        Log.d("fcrow", "${app.name} setupPin")
-        val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
-        pin_button.setOnClickListener {
-            Log.d("fcrow", "${app.name} onClick pin")
-            val db = getDb(ctx, true)
-            Log.d("fcrow", "${app.name} onClick pin after db")
-            if (!app.is_pinned) {
-                val vals = ContentValues()
-                vals.put("pin_order", 1)
-                vals.put("name", app.name)
-
-                Log.d("fcrow","${app.name}: insert setting pin to 1 ${app.is_pinned}")
-                db.insert( "windmill", null, vals)
-            } else {
-                Log.d("fcrow","${app.name}: delete removing pin ${app.is_pinned}")
-                db.delete("windmill","name = ?", arrayOf<String>(app.name))
-            }
-            db.close()
-            lifeCycle?.let{it.update("")}
-        }
+    fun setupPin(pin_button:View, name:String) {
+        Log.d("fcrow", "${name} setupPin")
     }
 
     fun getRowColor(icon: Drawable): Int {
@@ -179,6 +151,30 @@ class RowBuilder(val ctx:Context) {
         return color
     }
 
+    fun buildClickHandler(app:AppData):(v:View?) -> Unit {
+        return  { _:View? ->
+            Log.d("fcrow", "${app.name} onClick pin")
+            val db = getDb(ctx, true)
+            val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill where name = ?", arrayOf<String>(app.name))
+            val count = c?.let {c.count} ?: run {0}
+            c?.let{ it.close()}
+            Log.d("fcrow", "${app.name} count $count $count $count $count $count")
+            if(count == 0){
+                Log.d("fcrow", "${app.name} adding+ + + + + + + + ++ ++ + + + + + + + +++ + +  + +")
+                val vals = ContentValues()
+                vals.put("pin_order", 1)
+                vals.put("name", app.name)
+                db.insert( "windmill", null, vals)
+            } else {
+                Log.d("fcrow", "${app.name} removing - - - - - - - -  - - - - - - --- - - - - - --- - ")
+                db.delete("windmill","name = ?", arrayOf<String>(app.name))
+            }
+            db.close()
+            lifeCycle?.let{it.update("")}
+
+        }
+    }
+
     fun buildRow (app:AppData) {
         val inflater: LayoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val row = inflater.inflate(R.layout.row, null)
@@ -193,11 +189,12 @@ class RowBuilder(val ctx:Context) {
         iconv.setImageDrawable(icon)
         app.color = getRowColor(icon)
         row.setBackgroundColor(app.color)
+        val pin_button = row.findViewById(R.id.pin_button) as ImageView
+        Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
         app.v = row
-        setupPin(app)
     }
 
-    fun updateRow(idx:Int, app: AppData, priorColor:Int): View {
+    fun updateRow(idx:Int, app: AppData, priorColor:Int) {
         fun colorToString(color:Int):String {
             val red = Color.red(color)
             val green = Color.green(color)
@@ -205,12 +202,11 @@ class RowBuilder(val ctx:Context) {
             return "rgb($red,$green,$blue)"
         }
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
+        pin_button.setOnClickListener(buildClickHandler(app))
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
-        Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
         pin_button.setImageResource(pin_image)
         app.color = defineAlternateColor(app.color, priorColor)
         app.v.setBackgroundColor(app.color)
-        return app.v
     }
 }
 
