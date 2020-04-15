@@ -103,12 +103,10 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     })
 }
 
-class LifeCycle(ctx:Context, val layout:ListView, val adapter:WMAdapter, val fetchAppDataArray:(String) -> ArrayList<AppData>, val hideKb:(View)->Unit, rowBuilder:RowBuilder){
+class LifeCycle(ctx:Context, val layout:ListView, val adapter:WMAdapter, val fetchAppDataArray:(String) -> ArrayList<AppData>, val hideKb:(View)->Unit){
     var searchObj:SearchObj? = null
-    init {
-        rowBuilder.lifeCycle = this
-    }
     fun update(search:String) {
+        //layout.invalidateViews()
         adapter.clear()
         adapter.addAll(fetchAppDataArray(search))
         adapter.notifyDataSetChanged()
@@ -131,24 +129,21 @@ class RowBuilder(val ctx:Context) {
     var lifeCycle:LifeCycle? = null
 
     fun setupPin(app:AppData) {
+        Log.d("fcrow", "${app.name} setupPin")
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
-        pin_button.setOnClickListener { v ->
-            val db = getDb(ctx)
+        pin_button.setOnClickListener {
+            Log.d("fcrow", "${app.name} onClick pin")
+            val db = getDb(ctx, true)
+            Log.d("fcrow", "${app.name} onClick pin after db")
             if (!app.is_pinned) {
                 val vals = ContentValues()
                 vals.put("pin_order", 1)
                 vals.put("name", app.name)
 
                 Log.d("fcrow","${app.name}: insert setting pin to 1 ${app.is_pinned}")
-                if(db.insert( "windmill", null, vals) == -1L) {
-                    Log.d("fcrow","${app.name}: update setting pin to 1 ${app.is_pinned}")
-                    db.rawQuery(
-                        "update windmill set pin_order = ? where name = ?",
-                        arrayOf<String>(1.toString(), app.name)
-                    )
-                }
+                db.insert( "windmill", null, vals)
             } else {
-                Log.d("fcrow","${app.name}: delete setting pin to 1 ${app.is_pinned}")
+                Log.d("fcrow","${app.name}: delete removing pin ${app.is_pinned}")
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
             db.close()
@@ -198,7 +193,6 @@ class RowBuilder(val ctx:Context) {
         iconv.setImageDrawable(icon)
         app.color = getRowColor(icon)
         row.setBackgroundColor(app.color)
-        val isN = row == null
         app.v = row
         setupPin(app)
     }
@@ -214,18 +208,8 @@ class RowBuilder(val ctx:Context) {
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
         Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
         pin_button.setImageResource(pin_image)
-        val newColor = defineAlternateColor(app.color, priorColor)
-
-        val colorStr = colorToString(app.color)
-        val priorColorStr = colorToString(priorColor)
-        val newColorStr = colorToString(newColor)
-        val same = colorStr == newColorStr;
-        Log.d("fcrow","${app.name} | same:$same priorColor:$priorColorStr color: $colorStr alternateColor: $newColorStr")
-
-        if(idx > 0 && app.color != newColor){
-            app.color = newColor
-            app.v.setBackgroundColor(newColor)
-        }
+        app.color = defineAlternateColor(app.color, priorColor)
+        app.v.setBackgroundColor(app.color)
         return app.v
     }
 }
@@ -244,7 +228,8 @@ class Activity : AppCompatActivity() {
         val rowBuilder = RowBuilder(this)
         val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder,blank)
         val fetchAppDataArray = buildFetcher(this, layout, cache, blank)
-        val lifeCycle = LifeCycle(this, layout, adapter, fetchAppDataArray, ::hideKb, rowBuilder)
+        val lifeCycle = LifeCycle(this, layout, adapter, fetchAppDataArray, ::hideKb)
+        rowBuilder.lifeCycle = lifeCycle
         val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, lifeCycle)
         setupLayout(this, layout,adapter, searchObj)
         lifeCycle.update("")
@@ -270,7 +255,7 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, 
     fun refreshOrder(): HashMap<String, Int> {
         Log.d("fcrow", "refreshing order...........")
         val orderData = hashMapOf<String, Int>()
-        val db = getDb(ctx)
+        val db = getDb(ctx, false)
         val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
         c?.let {
             if (c.moveToFirst()) {
@@ -328,30 +313,19 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, va
     }
 }
 
-fun fetchOrder(ctx:Context): HashMap<String, Int>{
-    val data = hashMapOf<String, Int>()
-    val db = getDb(ctx)
-    val c:Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
-    c?.let {
-        if(c.moveToFirst()){
-            do {
-                val name=c.getString(c.getColumnIndex("name"))
-                val pin_order=c.getInt(c.getColumnIndex("pin_order"))
-                data.put(name, pin_order)
-            } while(c.moveToNext())
-        }
-        c.close()
-    }
-    db.close()
-    return data
-}
-
-fun getDb(ctx:Context):SQLiteDatabase {
+fun getDb(ctx:Context, write: Boolean):SQLiteDatabase {
     return dbh?.let{
-        it.getWritableDatabase()
+        return if(write)
+            it.writableDatabase
+        else
+            it.readableDatabase
     } ?: run {
-        dbh = DBHelper(ctx)
-        return DBHelper(ctx).getWritableDatabase()
+        val d = DBHelper(ctx)
+        dbh = d
+        return if(write)
+            d.writableDatabase
+        else
+             d.readableDatabase
     }
 }
 
