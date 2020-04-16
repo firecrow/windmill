@@ -94,30 +94,46 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     })
 }
 
-class LifeCycle(ctx:Context, val layout:ListView, val adapter:WMAdapter, val fetchAppDataArray:(String) -> ArrayList<AppData>, val hideKb:(View)->Unit){
+class LifeCycle(var activity:Activity){
     var searchObj:SearchObj? = null
+    var layout:ListView? = null
+    var adapter:WMAdapter? = null
+    var fetcher:Fetcher? = null
+    var hideKb:((v:View) -> Unit)? = null
+    var ctx:Context = activity as Context
+
+    fun setupLifeCycle(layout:ListView, adapter:WMAdapter, fetcher:Fetcher, searchObj:SearchObj){
+        this.layout = layout
+        this.adapter = adapter
+        this.fetcher = fetcher
+        this.searchObj = searchObj
+    }
+
     fun update(search:String) {
+        Log.d("fcrow", "update........................")
         //layout.invalidateViews()
-        adapter.clear()
-        adapter.addAll(fetchAppDataArray(search))
-        adapter.notifyDataSetChanged()
+        adapter?.clear()
+        val apps = fetcher?.fetch(search)
+        apps?.let {
+            Log.d("fcrow", "apps in let ${apps.count()}.. ${adapter == null}......................")
+            adapter?.addAll(it)
+            adapter?.notifyDataSetChanged()
+        }
     }
     fun scrollTop(){
-        layout.setSelection(0)
+        layout?.setSelection(0)
     }
+
     fun reset() {
-        searchObj?.let {
-            it.input.setText("")
-            it.input.clearFocus()
-        }
-        hideKb(layout)
+        searchObj?.input?.setText("")
+        searchObj?.input?.clearFocus()
+        activity.hideKb(View(ctx))
         update("")
         scrollTop()
     }
 }
 
-class RowBuilder(val ctx:Context) {
-    var lifeCycle:LifeCycle? = null
+class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
 
     fun setupPin(pin_button:View, name:String) {
         Log.d("fcrow", "${name} setupPin")
@@ -170,12 +186,13 @@ class RowBuilder(val ctx:Context) {
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
             db.close()
-            lifeCycle?.let{it.update("")}
+            lifeCycle.update("")
 
         }
     }
 
     fun buildRow (app:AppData) {
+        Log.d("fcrow", "${app.name} buildRow")
         val inflater: LayoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val row = inflater.inflate(R.layout.row, null)
         val pm = ctx.getPackageManager()
@@ -195,6 +212,7 @@ class RowBuilder(val ctx:Context) {
     }
 
     fun updateRow(idx:Int, app: AppData, priorColor:Int) {
+        Log.d("fcrow", "${app.name} updateRow")
         fun colorToString(color:Int):String {
             val red = Color.red(color)
             val green = Color.green(color)
@@ -211,7 +229,7 @@ class RowBuilder(val ctx:Context) {
 }
 
 class Activity : AppCompatActivity() {
-    var life:LifeCycle? = null
+    val lifeCycle:LifeCycle = LifeCycle(this)
 
     override fun onCreate(instance: Bundle? ) {
         super.onCreate(instance)
@@ -221,19 +239,18 @@ class Activity : AppCompatActivity() {
         val layout = findViewById<ListView>(R.id.apps) as ListView
         val blank = View(this)
 
-        val rowBuilder = RowBuilder(this)
-        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder,blank)
-        val fetchAppDataArray = buildFetcher(this, layout, cache, blank)
-        val lifeCycle = LifeCycle(this, layout, adapter, fetchAppDataArray, ::hideKb)
-        rowBuilder.lifeCycle = lifeCycle
+        val rowBuilder = RowBuilder(this, lifeCycle)
+        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder, blank)
+        val fetcher = Fetcher(this, cache, blank)
         val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, lifeCycle)
-        setupLayout(this, layout,adapter, searchObj)
+
+        lifeCycle.setupLifeCycle(layout, adapter, fetcher, searchObj)
+        setupLayout(this, layout, adapter, searchObj)
         lifeCycle.update("")
-        life = lifeCycle
     }
 
     override fun onResume(){
-        life?.let{it.reset()}
+        lifeCycle.reset()
         super.onResume()
     }
 
@@ -247,7 +264,8 @@ class Activity : AppCompatActivity() {
     }
 }
 
-fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, blank:View): (query:String) -> ArrayList<AppData> {
+class Fetcher(val ctx:Context, val cache: HashMap<String, AppData>, val blank:View) {
+
     fun refreshOrder(): HashMap<String, Int> {
         Log.d("fcrow", "refreshing order...........")
         val orderData = hashMapOf<String, Int>()
@@ -267,7 +285,9 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, 
         Log.d("fcrow", "refreshing order........... count: ${orderData.count()}")
         return orderData
     }
-    return { query:String ->
+
+    fun fetch(query:String): ArrayList<AppData> {
+        Log.d("fcrow", "fetch.................................")
         val orderData = refreshOrder()
         val pm = ctx.getPackageManager();
         val items:ArrayList<AppData> = arrayListOf<AppData>()
@@ -288,7 +308,7 @@ fun buildFetcher(ctx:Context, layout:ListView, cache: HashMap<String, AppData>, 
         }.sortedWith(compareBy<AppData>({ !it.is_pinned }).thenBy({ it.name })).filter { a ->
             Regex(query.toLowerCase()).find(a.name.toLowerCase()) != null}
         items.addAll(apps)
-        items
+        return items
     }
 }
 
@@ -299,8 +319,10 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, va
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
+        Log.d("fcrow", "getView start")
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
+        Log.d("fcrow", "${item.name} getView")
         if(item.v == blank){
             rowBuilder.buildRow(item)
         }
