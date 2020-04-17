@@ -43,50 +43,7 @@ class AppData (
 class SearchObj(val input:EditText, val button: ImageView, var getText:() -> String, var setButton:(itemPos:Int) -> Unit)
 
 
-class LifeCycle(var activity:Activity){
-    var searchObj:SearchObj? = null
-    var layout:ListView? = null
-    var adapter:WMAdapter? = null
-    var fetcher:Fetcher? = null
-    var hideKb:((v:View) -> Unit)? = null
-    var ctx:Context = activity as Context
-
-    fun setupLifeCycle(layout:ListView, adapter:WMAdapter, fetcher:Fetcher, searchObj:SearchObj){
-        this.layout = layout
-        this.adapter = adapter
-        this.fetcher = fetcher
-        this.searchObj = searchObj
-    }
-
-    fun update(search:String) {
-        Log.d("fcrow", "update........................")
-        //layout.invalidateViews()
-        adapter?.clear()
-        val apps = fetcher?.fetch(search)
-        apps?.let {
-            Log.d("fcrow", "apps in let ${apps.count()}.. ${adapter == null}......................")
-            adapter?.addAll(it)
-            adapter?.notifyDataSetChanged()
-        }
-    }
-    fun scrollTop(){
-        layout?.setSelection(0)
-    }
-
-    fun reset() {
-        searchObj?.input?.setText("")
-        searchObj?.input?.clearFocus()
-        activity.hideKb(View(ctx))
-        update("")
-        scrollTop()
-    }
-}
-
 class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
-
-    fun setupPin(pin_button:View, name:String) {
-        Log.d("fcrow", "${name} setupPin")
-    }
 
     fun getRowColor(icon: Drawable): Int {
         val iconb: Bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
@@ -118,30 +75,24 @@ class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
 
     fun buildClickHandler(app:AppData):(v:View?) -> Unit {
         return  { _:View? ->
-            Log.d("fcrow", "${app.name} onClick pin")
             val db = getDb(ctx, true)
             val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill where name = ?", arrayOf<String>(app.name))
             val count = c?.let {c.count} ?: run {0}
             c?.let{ it.close()}
-            Log.d("fcrow", "${app.name} count $count $count $count $count $count")
             if(count == 0){
-                Log.d("fcrow", "${app.name} adding+ + + + + + + + ++ ++ + + + + + + + +++ + +  + +")
                 val vals = ContentValues()
                 vals.put("pin_order", 1)
                 vals.put("name", app.name)
                 db.insert( "windmill", null, vals)
             } else {
-                Log.d("fcrow", "${app.name} removing - - - - - - - -  - - - - - - --- - - - - - --- - ")
                 db.delete("windmill","name = ?", arrayOf<String>(app.name))
             }
             db.close()
             lifeCycle.update("")
-
         }
     }
 
     fun buildRow (app:AppData) {
-        Log.d("fcrow", "${app.name} buildRow")
         val inflater: LayoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val row = inflater.inflate(R.layout.row, null)
         val pm = ctx.getPackageManager()
@@ -156,18 +107,10 @@ class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
         app.color = getRowColor(icon)
         row.setBackgroundColor(app.color)
         val pin_button = row.findViewById(R.id.pin_button) as ImageView
-        Log.d("fcrow","${app.name}: update pin image to ${app.is_pinned}")
         app.v = row
     }
 
     fun updateRow(idx:Int, app: AppData, priorColor:Int) {
-        Log.d("fcrow", "${app.name} updateRow")
-        fun colorToString(color:Int):String {
-            val red = Color.red(color)
-            val green = Color.green(color)
-            val blue = Color.blue(color)
-            return "rgb($red,$green,$blue)"
-        }
         val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
         pin_button.setOnClickListener(buildClickHandler(app))
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
@@ -177,11 +120,10 @@ class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
     }
 }
 
-
-class Fetcher(val ctx:Context, val cache: HashMap<String, AppData>, val blank:View) {
+class Fetcher(val ctx:Context, val blank:View) {
+    val cache = hashMapOf<String, AppData>()
 
     fun refreshOrder(): HashMap<String, Int> {
-        Log.d("fcrow", "refreshing order...........")
         val orderData = hashMapOf<String, Int>()
         val db = getDb(ctx, false)
         val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
@@ -196,12 +138,10 @@ class Fetcher(val ctx:Context, val cache: HashMap<String, AppData>, val blank:Vi
             c.close()
         }
         db.close()
-        Log.d("fcrow", "refreshing order........... count: ${orderData.count()}")
         return orderData
     }
 
     fun fetch(query:String): ArrayList<AppData> {
-        Log.d("fcrow", "fetch.................................")
         val orderData = refreshOrder()
         val pm = ctx.getPackageManager();
         val items:ArrayList<AppData> = arrayListOf<AppData>()
@@ -245,15 +185,49 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, va
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
     override fun getItemId(idx: Int): Long { return idx.toLong() }
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
-        Log.d("fcrow", "getView start")
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
-        Log.d("fcrow", "${item.name} getView")
         if(item.v == blank){
             rowBuilder.buildRow(item)
         }
         rowBuilder.updateRow(idx, item, priorColor)
         return item.v
+    }
+}
+
+class LifeCycle(var activity:Activity){
+    var searchObj:SearchObj? = null
+    var layout:ListView? = null
+    var adapter:WMAdapter? = null
+    var fetcher:Fetcher? = null
+    var ctx:Context = activity as Context
+
+    fun setupLifeCycle(layout:ListView, adapter:WMAdapter, fetcher:Fetcher, searchObj:SearchObj){
+        this.layout = layout
+        this.adapter = adapter
+        this.fetcher = fetcher
+        this.searchObj = searchObj
+    }
+
+    fun update(search:String) {
+        //layout.invalidateViews()
+        adapter?.clear()
+        val apps = fetcher?.fetch(search)
+        apps?.let {
+            adapter?.addAll(it)
+            adapter?.notifyDataSetChanged()
+        }
+    }
+    fun scrollTop(){
+        layout?.setSelection(0)
+    }
+
+    fun reset() {
+        searchObj?.input?.setText("")
+        searchObj?.input?.clearFocus()
+        activity.hideKb(View(ctx))
+        update("")
+        scrollTop()
     }
 }
 
@@ -264,13 +238,12 @@ class Activity : AppCompatActivity() {
         super.onCreate(instance)
         setContentView(R.layout.main)
 
-        val cache = hashMapOf<String, AppData>()
         val layout = findViewById<ListView>(R.id.apps) as ListView
         val blank = View(this)
 
         val rowBuilder = RowBuilder(this, lifeCycle)
         val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder, blank)
-        val fetcher = Fetcher(this, cache, blank)
+        val fetcher = Fetcher(this, blank)
         val searchObj = setupSearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, lifeCycle)
 
         lifeCycle.setupLifeCycle(layout, adapter, fetcher, searchObj)
@@ -281,10 +254,6 @@ class Activity : AppCompatActivity() {
     override fun onResume(){
         lifeCycle.reset()
         super.onResume()
-    }
-
-    override fun onPause(){
-        super.onPause()
     }
 
     fun hideKb(v:View){
