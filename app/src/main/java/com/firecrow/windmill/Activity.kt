@@ -42,57 +42,6 @@ class AppData (
 
 class SearchObj(val input:EditText, val button: ImageView, var getText:() -> String, var setButton:(itemPos:Int) -> Unit)
 
-fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
-    val input = bar.findViewById<EditText>(R.id.search) as EditText;
-    val button = bar.findViewById<EditText>(R.id.search_button) as ImageView;
-
-    val setButton  = { itemPos:Int ->
-        if (input.text.length > 0) {
-            button.setImageResource(R.drawable.x_search)
-        } else if (itemPos > 0) {
-            button.setImageResource(R.drawable.up_arrow)
-        } else {
-            button.setImageResource(R.drawable.blank)
-        }
-    }
-
-    button.setOnClickListener{v ->
-        lifeCycle.reset()
-    }
-
-    input.addTextChangedListener(object: TextWatcher {
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-        override fun afterTextChanged(editable: Editable?) {}
-        override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
-            if(s.toString() != "") {
-                lifeCycle.update(s.toString())
-                setButton(0)
-                lifeCycle.scrollTop()
-            }
-        }
-    })
-    val getText = { -> input.text.toString()}
-    val obj =   SearchObj( input, button,  getText, setButton )
-    lifeCycle.searchObj = obj
-    return obj
-}
-
-fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:SearchObj){
-    layout.setDivider(null)
-    layout.setAdapter(adapter)
-    layout.setOnItemClickListener { parent, view, idx, id ->
-        val app: AppData = adapter.getItem(idx)
-        ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { ctx.startActivity(it) }
-    }
-    layout.setOnScrollListener(object: AbsListView.OnScrollListener {
-        override fun onScroll(view: AbsListView, first:Int, visible:Int, total:Int) {
-            searchObj.setButton(first)
-        }
-        override fun onScrollStateChanged(view:AbsListView? , scrollState:Int) {
-
-        }
-    })
-}
 
 class LifeCycle(var activity:Activity){
     var searchObj:SearchObj? = null
@@ -228,41 +177,6 @@ class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
     }
 }
 
-class Activity : AppCompatActivity() {
-    val lifeCycle:LifeCycle = LifeCycle(this)
-
-    override fun onCreate(instance: Bundle? ) {
-        super.onCreate(instance)
-        setContentView(R.layout.main)
-
-        val cache = hashMapOf<String, AppData>()
-        val layout = findViewById<ListView>(R.id.apps) as ListView
-        val blank = View(this)
-
-        val rowBuilder = RowBuilder(this, lifeCycle)
-        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder, blank)
-        val fetcher = Fetcher(this, cache, blank)
-        val searchObj = setupSearchObj(findViewById<EditText>(R.id.search_bar) as LinearLayout, lifeCycle)
-
-        lifeCycle.setupLifeCycle(layout, adapter, fetcher, searchObj)
-        setupLayout(this, layout, adapter, searchObj)
-        lifeCycle.update("")
-    }
-
-    override fun onResume(){
-        lifeCycle.reset()
-        super.onResume()
-    }
-
-    override fun onPause(){
-        super.onPause()
-    }
-
-    fun hideKb(v:View){
-        val imm =  getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
-    }
-}
 
 class Fetcher(val ctx:Context, val cache: HashMap<String, AppData>, val blank:View) {
 
@@ -312,6 +226,18 @@ class Fetcher(val ctx:Context, val cache: HashMap<String, AppData>, val blank:Vi
     }
 }
 
+class DBHelper(ctx:Context) : SQLiteOpenHelper(ctx, "windmill.db", null, 1) {
+
+    override fun onCreate(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE windmill (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pin_order INTEGER)");
+    }
+
+    override fun onUpgrade(db:SQLiteDatabase, old:Int, version:Int) {}
+
+    override fun onDowngrade(db:SQLiteDatabase, oldVersion:Int, newVersion:Int) {
+        onUpgrade(db, oldVersion, newVersion);
+    }
+}
 
 class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, val rowBuilder:RowBuilder, val blank:View):
         ArrayAdapter<AppData>(ctx, resource, apps) {
@@ -331,6 +257,42 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, va
     }
 }
 
+class Activity : AppCompatActivity() {
+    val lifeCycle:LifeCycle = LifeCycle(this)
+
+    override fun onCreate(instance: Bundle? ) {
+        super.onCreate(instance)
+        setContentView(R.layout.main)
+
+        val cache = hashMapOf<String, AppData>()
+        val layout = findViewById<ListView>(R.id.apps) as ListView
+        val blank = View(this)
+
+        val rowBuilder = RowBuilder(this, lifeCycle)
+        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder, blank)
+        val fetcher = Fetcher(this, cache, blank)
+        val searchObj = setupSearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, lifeCycle)
+
+        lifeCycle.setupLifeCycle(layout, adapter, fetcher, searchObj)
+        setupLayout(this, layout, adapter, searchObj)
+        lifeCycle.update("")
+    }
+
+    override fun onResume(){
+        lifeCycle.reset()
+        super.onResume()
+    }
+
+    override fun onPause(){
+        super.onPause()
+    }
+
+    fun hideKb(v:View){
+        val imm =  getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
+    }
+}
+
 fun getDb(ctx:Context, write: Boolean):SQLiteDatabase {
     return dbh?.let{
         return if(write)
@@ -343,19 +305,58 @@ fun getDb(ctx:Context, write: Boolean):SQLiteDatabase {
         return if(write)
             d.writableDatabase
         else
-             d.readableDatabase
+            d.readableDatabase
     }
 }
 
-class DBHelper(ctx:Context) : SQLiteOpenHelper(ctx, "windmill.db", null, 1) {
+fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:SearchObj){
+    layout.setDivider(null)
+    layout.setAdapter(adapter)
+    layout.setOnItemClickListener { parent, view, idx, id ->
+        val app: AppData = adapter.getItem(idx)
+        ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)?.let { ctx.startActivity(it) }
+    }
+    layout.setOnScrollListener(object: AbsListView.OnScrollListener {
+        override fun onScroll(view: AbsListView, first:Int, visible:Int, total:Int) {
+            searchObj.setButton(first)
+        }
+        override fun onScrollStateChanged(view:AbsListView? , scrollState:Int) {
 
-    override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("CREATE TABLE windmill (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pin_order INTEGER)");
+        }
+    })
+}
+
+fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
+    val input = bar.findViewById<EditText>(R.id.search) as EditText;
+    val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView;
+
+    val setButton  = { itemPos:Int ->
+        if (input.text.length > 0) {
+            button.setImageResource(R.drawable.x_search)
+        } else if (itemPos > 0) {
+            button.setImageResource(R.drawable.up_arrow)
+        } else {
+            button.setImageResource(R.drawable.blank)
+        }
     }
 
-    override fun onUpgrade(db:SQLiteDatabase, old:Int, version:Int) {}
-
-    override fun onDowngrade(db:SQLiteDatabase, oldVersion:Int, newVersion:Int) {
-        onUpgrade(db, oldVersion, newVersion);
+    button.setOnClickListener{v ->
+        lifeCycle.reset()
     }
+
+    input.addTextChangedListener(object: TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun afterTextChanged(editable: Editable?) {}
+        override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            if(s.toString() != "") {
+                lifeCycle.update(s.toString())
+                setButton(0)
+                lifeCycle.scrollTop()
+            }
+        }
+    })
+    val getText = { -> input.text.toString()}
+    val obj =   SearchObj( input, button,  getText, setButton )
+    lifeCycle.searchObj = obj
+    return obj
 }
