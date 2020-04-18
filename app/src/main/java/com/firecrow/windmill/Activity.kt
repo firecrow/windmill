@@ -217,11 +217,11 @@ class LifeCycle(var activity:Activity){
     }
 
     fun reset() {
-        scrollTop()
         activity.hideKb()
         searchObj?.input?.setText("")
         searchObj?.input?.clearFocus()
         update("")
+        scrollTop()
     }
 }
 
