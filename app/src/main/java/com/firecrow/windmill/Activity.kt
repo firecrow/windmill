@@ -37,11 +37,7 @@ class AppData (
     var color:Int,
     var order: Int,
     var is_pinned:Boolean,
-    var v:View,
     val type: LayoutType);
-
-class SearchObj(val input:EditText, val button: ImageView, var getText:() -> String, var setButton:(itemPos:Int) -> Unit)
-
 
 class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
 
@@ -73,26 +69,24 @@ class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
         return color
     }
 
-    fun buildClickHandler(app:AppData):(v:View?) -> Unit {
-        return  { _:View? ->
-            val db = getDb(ctx, true)
-            val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill where name = ?", arrayOf<String>(app.name))
-            val count = c?.let {c.count} ?: run {0}
-            c?.let{ it.close()}
-            if(count == 0){
-                val vals = ContentValues()
-                vals.put("pin_order", 1)
-                vals.put("name", app.name)
-                db.insert( "windmill", null, vals)
-            } else {
-                db.delete("windmill","name = ?", arrayOf<String>(app.name))
-            }
-            db.close()
-            lifeCycle.update("")
+    fun onItemClick(app:AppData) {
+        val db = getDb(ctx, true)
+        val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill where name = ?", arrayOf<String>(app.name))
+        val count = c?.let {c.count} ?: run {0}
+        c?.let{ it.close()}
+        if(count == 0){
+            val vals = ContentValues()
+            vals.put("pin_order", 1)
+            vals.put("name", app.name)
+            db.insert( "windmill", null, vals)
+        } else {
+            db.delete("windmill","name = ?", arrayOf<String>(app.name))
         }
+        db.close()
+        lifeCycle.update(null)
     }
 
-    fun buildRow (app:AppData) {
+    fun buildRow (app:AppData):View {
         val inflater: LayoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val row = inflater.inflate(R.layout.row, null)
         val pm = ctx.getPackageManager()
@@ -107,20 +101,21 @@ class RowBuilder(val ctx:Context, val lifeCycle:LifeCycle) {
         app.color = getRowColor(icon)
         row.setBackgroundColor(app.color)
         val pin_button = row.findViewById(R.id.pin_button) as ImageView
-        app.v = row
+        return row
     }
 
-    fun updateRow(idx:Int, app: AppData, priorColor:Int) {
-        val pin_button = app.v.findViewById(R.id.pin_button) as ImageView
-        pin_button.setOnClickListener(buildClickHandler(app))
+    fun updateRow(row:View, idx:Int, app: AppData, priorColor:Int):View {
+        val pin_button = row.findViewById(R.id.pin_button) as ImageView
+        pin_button.setOnClickListener{onItemClick(app)}
         val pin_image = if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
         pin_button.setImageResource(pin_image)
         app.color = defineAlternateColor(app.color, priorColor)
-        app.v.setBackgroundColor(app.color)
+        row.setBackgroundColor(app.color)
+        return row
     }
 }
 
-class Fetcher(val ctx:Context, val blank:View) {
+class Fetcher(val ctx:Context) {
     val cache = hashMapOf<String, AppData>()
 
     fun refreshOrder(): HashMap<String, Int> {
@@ -155,7 +150,7 @@ class Fetcher(val ctx:Context, val blank:View) {
                 it.is_pinned = order != 0
                 it
             } ?:run {
-                val item = AppData(it, name, 0x00000000, order, order != 0, blank, LayoutType.APP)
+                val item = AppData(it, name, 0x00000000, order, order != 0, LayoutType.APP)
                 cache.put(name, item)
                 item
             }
@@ -179,7 +174,7 @@ class DBHelper(ctx:Context) : SQLiteOpenHelper(ctx, "windmill.db", null, 1) {
     }
 }
 
-class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, val rowBuilder:RowBuilder, val blank:View):
+class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, val rowBuilder:RowBuilder):
         ArrayAdapter<AppData>(ctx, resource, apps) {
     override fun getCount(): Int { return apps.count() }
     override fun getItem(idx: Int): AppData { return apps.get(idx) }
@@ -187,11 +182,7 @@ class WMAdapter(val ctx:Context, resource: Int, var apps: ArrayList<AppData>, va
     override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
         val priorColor:Int = if(idx > 0) getItem(idx-1).color else Color.parseColor("#000000")
         val item = getItem(idx)
-        if(item.v == blank){
-            rowBuilder.buildRow(item)
-        }
-        rowBuilder.updateRow(idx, item, priorColor)
-        return item.v
+        return rowBuilder.updateRow(rowBuilder.buildRow(item), idx, item, priorColor)
     }
 }
 
@@ -201,6 +192,7 @@ class LifeCycle(var activity:Activity){
     var adapter:WMAdapter? = null
     var fetcher:Fetcher? = null
     var ctx:Context = activity as Context
+    var query = ""
 
     fun setupLifeCycle(layout:ListView, adapter:WMAdapter, fetcher:Fetcher, searchObj:SearchObj){
         this.layout = layout
@@ -209,10 +201,12 @@ class LifeCycle(var activity:Activity){
         this.searchObj = searchObj
     }
 
-    fun update(search:String) {
+    fun update(search:String?) {
         //layout.invalidateViews()
         adapter?.clear()
-        val apps = fetcher?.fetch(search)
+        val query = search?.let{it}?:run{this.query}
+        val apps = fetcher?.fetch(query)
+        this.query = query
         apps?.let {
             adapter?.addAll(it)
             adapter?.notifyDataSetChanged()
@@ -223,11 +217,11 @@ class LifeCycle(var activity:Activity){
     }
 
     fun reset() {
+        scrollTop()
+        activity.hideKb()
         searchObj?.input?.setText("")
         searchObj?.input?.clearFocus()
-        activity.hideKb(View(ctx))
         update("")
-        scrollTop()
     }
 }
 
@@ -239,12 +233,11 @@ class Activity : AppCompatActivity() {
         setContentView(R.layout.main)
 
         val layout = findViewById<ListView>(R.id.apps) as ListView
-        val blank = View(this)
 
         val rowBuilder = RowBuilder(this, lifeCycle)
-        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder, blank)
-        val fetcher = Fetcher(this, blank)
-        val searchObj = setupSearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, lifeCycle)
+        val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder)
+        val fetcher = Fetcher(this)
+        val searchObj = SearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, lifeCycle)
 
         lifeCycle.setupLifeCycle(layout, adapter, fetcher, searchObj)
         setupLayout(this, layout, adapter, searchObj)
@@ -256,9 +249,11 @@ class Activity : AppCompatActivity() {
         super.onResume()
     }
 
-    fun hideKb(v:View){
+    fun hideKb(){
+        val view:View? = this.getCurrentFocus()
+        val v = view?.let{it}?:run{View(this)}
         val imm =  getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(v.getWindowToken(), 0)
+        imm.hideSoftInputFromWindow(v.windowToken, 0)
     }
 }
 
@@ -295,11 +290,29 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
     })
 }
 
-fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
+class SearchObj(val bar:LinearLayout, val lifeCycle:LifeCycle) {
     val input = bar.findViewById<EditText>(R.id.search) as EditText;
     val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView;
 
-    val setButton  = { itemPos:Int ->
+    init {
+        lifeCycle.searchObj = this
+
+        button.setOnClickListener { v ->
+            lifeCycle.reset()
+        }
+
+        input.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun afterTextChanged(editable: Editable?) {}
+            override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                lifeCycle.update(s.toString())
+                setButton(0)
+                lifeCycle.scrollTop()
+            }
+        })
+    }
+
+    fun setButton(itemPos:Int){
         if (input.text.length > 0) {
             button.setImageResource(R.drawable.x_search)
         } else if (itemPos > 0) {
@@ -309,23 +322,7 @@ fun setupSearchObj(bar:LinearLayout, lifeCycle:LifeCycle):SearchObj {
         }
     }
 
-    button.setOnClickListener{v ->
-        lifeCycle.reset()
+    fun getText():String {
+        return input.text.toString()
     }
-
-    input.addTextChangedListener(object: TextWatcher {
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-        override fun afterTextChanged(editable: Editable?) {}
-        override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
-            if(s.toString() != "") {
-                lifeCycle.update(s.toString())
-                setButton(0)
-                lifeCycle.scrollTop()
-            }
-        }
-    })
-    val getText = { -> input.text.toString()}
-    val obj =   SearchObj( input, button,  getText, setButton )
-    lifeCycle.searchObj = obj
-    return obj
 }
