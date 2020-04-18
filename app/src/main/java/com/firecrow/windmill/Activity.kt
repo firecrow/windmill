@@ -31,6 +31,12 @@ enum class LayoutType {
     SEARCH
 }
 
+enum class SearchState {
+    BLANK,
+    SEARCH,
+    SCROLL
+}
+
 class AppData (
     val appInfo: ApplicationInfo,
     var name:String,
@@ -291,14 +297,19 @@ fun setupLayout(ctx:Context, layout:ListView, adapter:WMAdapter, searchObj:Searc
 }
 
 class SearchObj(val bar:LinearLayout, val lifeCycle:LifeCycle) {
-    val input = bar.findViewById<EditText>(R.id.search) as EditText;
-    val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView;
+    val input = bar.findViewById<EditText>(R.id.search) as EditText
+    val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView
+    var state = SearchState.BLANK
 
     init {
         lifeCycle.searchObj = this
 
         button.setOnClickListener { v ->
-            lifeCycle.reset()
+            if (state == SearchState.SEARCH) {
+                lifeCycle.reset()
+            } else if(state == SearchState.SCROLL) {
+                lifeCycle.scrollTop()
+            }
         }
 
         input.addTextChangedListener(object : TextWatcher {
@@ -314,10 +325,13 @@ class SearchObj(val bar:LinearLayout, val lifeCycle:LifeCycle) {
 
     fun setButton(itemPos:Int){
         if (input.text.length > 0) {
+            state = SearchState.SEARCH
             button.setImageResource(R.drawable.x_search)
         } else if (itemPos > 0) {
+            state = SearchState.SCROLL
             button.setImageResource(R.drawable.up_arrow)
         } else {
+            state = SearchState.BLANK
             button.setImageResource(R.drawable.blank)
         }
     }
