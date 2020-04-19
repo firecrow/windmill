@@ -7,7 +7,7 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_launcher_foreground"
         android:supportsRtl="true"
-        android:versionCode="1"
+        android:versionCode="2"
         android:versionName="apple"
         android:theme="@style/AppTheme">
 
