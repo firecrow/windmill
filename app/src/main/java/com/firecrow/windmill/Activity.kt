@@ -146,7 +146,7 @@ class Fetcher(val ctx:Context) {
         val orderData = refreshOrder()
         val pm = ctx.getPackageManager();
         val items:ArrayList<AppData> = arrayListOf<AppData>()
-        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
+        val apps = pm.getInstalledApplications(PackageManager.GET_ACTIVITIES).filter { app ->
             pm.getLaunchIntentForPackage(app.packageName) != null
         }.toMutableList<ApplicationInfo>().map {
             val name = it.loadLabel(pm).toString()
