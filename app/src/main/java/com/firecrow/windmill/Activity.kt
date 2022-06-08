@@ -29,9 +29,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.toBitmap
 import androidx.palette.graphics.Palette
 
-
-var dbh: DBHelper? = null
-
 enum class LayoutType {
     APP,
     SEARCH
@@ -48,8 +45,6 @@ class AppData(
     var name: String,
     var icon: Drawable,
     var color: Int,
-    var order: Int,
-    var is_pinned: Boolean,
     val type: LayoutType
 );
 
@@ -61,22 +56,6 @@ class RowBuilder(val ctx: Context, val lifeCycle: LifeCycle) {
     }
 
     fun onItemClick(app: AppData) {
-        val db = getDb(ctx, true)
-        val c: Cursor? = db.rawQuery(
-            "select id, name, pin_order from windmill where name = ?",
-            arrayOf<String>(app.name)
-        )
-        val count = c?.let { c.count } ?: run { 0 }
-        c?.let { it.close() }
-        if (count == 0) {
-            val vals = ContentValues()
-            vals.put("pin_order", 1)
-            vals.put("name", app.name)
-            db.insert("windmill", null, vals)
-        } else {
-            db.delete("windmill", "name = ?", arrayOf<String>(app.name))
-        }
-        db.close()
         lifeCycle.update(null)
     }
 
@@ -86,105 +65,15 @@ class RowBuilder(val ctx: Context, val lifeCycle: LifeCycle) {
         val row = inflater.inflate(R.layout.row, null)
         val pm = ctx.getPackageManager()
 
-        val namev = row.findViewById(R.id.appname) as TextView
-        namev.setText(app.name)
-        namev.setTextColor(Color.WHITE)
-
         val iconv = row.findViewById(R.id.icon) as ImageView
         iconv.setImageDrawable(app.icon)
         row.setBackgroundColor(app.color)
-        val pin_button = row.findViewById(R.id.pin_button) as ImageView
         return row
     }
 
     fun updateRow(row: View, idx: Int, app: AppData, priorColor: Int): View {
-        val pin_button = row.findViewById(R.id.pin_button) as ImageView
-        pin_button.setOnClickListener { onItemClick(app) }
-        val pin_image =
-            if (app.is_pinned) R.drawable.pinned_graphic else R.drawable.not_pinned_graphic
-        pin_button.setImageResource(pin_image)
         row.setBackgroundColor(app.color)
         return row
-    }
-}
-
-class Fetcher(val ctx: Context) {
-    val cache = hashMapOf<String, AppData>()
-
-    fun refreshOrder(): HashMap<String, Int> {
-        val orderData = hashMapOf<String, Int>()
-        val db = getDb(ctx, false)
-        val c: Cursor? = db.rawQuery("select id, name, pin_order from windmill", null)
-        c?.let {
-            if (c.moveToFirst()) {
-                do {
-                    val name = c.getString(c.getColumnIndexOrThrow("name"))
-                    val pin_order = c.getInt(c.getColumnIndexOrThrow("pin_order"))
-                    orderData.put(name, pin_order)
-                } while (c.moveToNext())
-            }
-            c.close()
-        }
-        db.close()
-        return orderData
-    }
-
-    fun fetch(query: String): ArrayList<AppData> {
-        val orderData = refreshOrder()
-        val pm = ctx.getPackageManager();
-        val items: ArrayList<AppData> = arrayListOf<AppData>()
-        pm.getInstalledApplications(PackageManager.GET_META_DATA).filter { app ->
-            pm.getLaunchIntentForPackage(app.packageName) != null
-        }.forEach { app ->
-            val order = orderData[app.packageName] ?: 0
-            val icon = pm.getApplicationIcon(app)
-            var color = 0x000000
-            try {
-                var background = icon
-                if(background is AdaptiveIconDrawable){
-                    background = background.getBackground()
-                }
-                if(background is ColorDrawable){
-                    color = background.getColor()
-                    Log.i("fcrow", "get color: ${app.packageName}")
-                }else{
-                    val iconb: Bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
-                    val canvas: Canvas = Canvas(iconb)
-                    background.setBounds(0, 0, 10, 10)
-                    background.draw(canvas)
-                    val p: Palette = Palette.from(iconb).generate()
-                    color = p.getDominantColor(0xffffffff.toInt())
-                    Log.i("fcrow", "get nuclear: ${app.packageName}")
-                }
-                Log.i("fcrow", "background ended as drawableis: ${background.toString()}")
-            }catch (e: ClassCastException){
-                Log.e("fcrow", "unable to parse icon: ${icon.toString()} for package: ${app.packageName}, ${e.toString()}")
-            }
-            Log.i("fcrow", "color ${color.toString()}")
-            items.add(AppData(
-                app,
-                app.loadLabel(pm).toString(),
-                icon,
-                color,
-                order,
-                order != 0,
-                LayoutType.APP
-            ))
-        }
-        return items
-    }
-}
-
-class DBHelper(ctx: Context) : SQLiteOpenHelper(ctx, "windmill.db", null, 1) {
-
-    override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("CREATE TABLE windmill (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pin_order INTEGER)");
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase, old: Int, version: Int) {}
-
-    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        onUpgrade(db, oldVersion, newVersion);
     }
 }
 
@@ -216,14 +105,14 @@ class WMAdapter(
 
 class LifeCycle(var activity: Activity) {
     var searchObj: SearchObj? = null
-    var layout: ListView? = null
+    var layout: GridView? = null
     var adapter: WMAdapter? = null
     var fetcher: Fetcher? = null
     var ctx: Context = activity as Context
     var query = ""
 
     fun setupLifeCycle(
-        layout: ListView,
+        layout: GridView,
         adapter: WMAdapter,
         fetcher: Fetcher,
         searchObj: SearchObj
@@ -266,7 +155,7 @@ class Activity : AppCompatActivity() {
         super.onCreate(instance)
         setContentView(R.layout.main)
 
-        val layout = findViewById<ListView>(R.id.apps) as ListView
+        val layout = findViewById<GridView>(R.id.apps) as GridView
 
         val rowBuilder = RowBuilder(this, lifeCycle)
         val adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder)
@@ -292,30 +181,14 @@ class Activity : AppCompatActivity() {
     }
 }
 
-fun getDb(ctx: Context, write: Boolean): SQLiteDatabase {
-    return dbh?.let {
-        return if (write)
-            it.writableDatabase
-        else
-            it.readableDatabase
-    } ?: run {
-        val d = DBHelper(ctx)
-        dbh = d
-        return if (write)
-            d.writableDatabase
-        else
-            d.readableDatabase
-    }
-}
-
-fun setupLayout(ctx: Context, layout: ListView, adapter: WMAdapter, searchObj: SearchObj) {
-    layout.setDivider(null)
+fun setupLayout(ctx: Context, layout: GridView, adapter: WMAdapter, searchObj: SearchObj) {
     layout.setAdapter(adapter)
     layout.setOnItemClickListener { parent, view, idx, id ->
         val app: AppData = adapter.getItem(idx)
         ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)
             ?.let { ctx.startActivity(it) }
     }
+    /*
     layout.setOnScrollListener(object : AbsListView.OnScrollListener {
         override fun onScroll(view: AbsListView, first: Int, visible: Int, total: Int) {
             searchObj.setButton(first)
@@ -325,6 +198,7 @@ fun setupLayout(ctx: Context, layout: ListView, adapter: WMAdapter, searchObj: S
 
         }
     })
+     */
 }
 
 class SearchObj(val bar: LinearLayout, val lifeCycle: LifeCycle) {
