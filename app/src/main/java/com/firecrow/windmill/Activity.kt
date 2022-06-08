@@ -146,11 +146,15 @@ class Fetcher(val ctx: Context) {
                 }
                 if(background is ColorDrawable){
                     color = background.getColor()
-                }else if (background is BitmapDrawable){
-                    Palette.from(background.toBitmap(20, 20)).generate { palette ->
-                        color = palette?.getVibrantColor(color) ?: color
-                        Log.i("fcrow","${palette?.getVibrantColor(color).toString()}")
-                    }
+                    Log.i("fcrow", "get color: ${app.packageName}")
+                }else{
+                    val iconb: Bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888)
+                    val canvas: Canvas = Canvas(iconb)
+                    background.setBounds(0, 0, 10, 10)
+                    background.draw(canvas)
+                    val p: Palette = Palette.from(iconb).generate()
+                    color = p.getDominantColor(0xffffffff.toInt())
+                    Log.i("fcrow", "get nuclear: ${app.packageName}")
                 }
                 Log.i("fcrow", "background ended as drawableis: ${background.toString()}")
             }catch (e: ClassCastException){
