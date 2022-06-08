@@ -1,5 +1,6 @@
 package com.firecrow.windmill
 
+import android.R.attr.bitmap
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -8,9 +9,11 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -23,8 +26,9 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.drawable.toBitmap
 import androidx.palette.graphics.Palette
-import kotlin.math.absoluteValue
+
 
 var dbh: DBHelper? = null
 
@@ -133,18 +137,31 @@ class Fetcher(val ctx: Context) {
             pm.getLaunchIntentForPackage(app.packageName) != null
         }.forEach { app ->
             val order = orderData[app.packageName] ?: 0
-            val color = 0x000000
             val icon = pm.getApplicationIcon(app)
+            var color = 0x000000
             try {
-                val background:Drawable = (icon as AdaptiveIconDrawable).background
+                var background = icon
+                if(background is AdaptiveIconDrawable){
+                    background = background.getBackground()
+                }
+                if(background is ColorDrawable){
+                    color = background.getColor()
+                }else if (background is BitmapDrawable){
+                    Palette.from(background.toBitmap(20, 20)).generate { palette ->
+                        color = palette?.getVibrantColor(color) ?: color
+                        Log.i("fcrow","${palette?.getVibrantColor(color).toString()}")
+                    }
+                }
+                Log.i("fcrow", "background ended as drawableis: ${background.toString()}")
             }catch (e: ClassCastException){
                 Log.e("fcrow", "unable to parse icon: ${icon.toString()} for package: ${app.packageName}, ${e.toString()}")
             }
+            Log.i("fcrow", "color ${color.toString()}")
             items.add(AppData(
                 app,
                 app.loadLabel(pm).toString(),
                 icon,
-                0x00000,
+                color,
                 order,
                 order != 0,
                 LayoutType.APP
