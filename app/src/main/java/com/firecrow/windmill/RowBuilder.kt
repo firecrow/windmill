@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.GridView
 import android.widget.ImageView
+import android.widget.LinearLayout
 
 class RowBuilder(val ctx: Context) {
 
@@ -13,15 +15,14 @@ class RowBuilder(val ctx: Context) {
         return 0x00000
     }
 
-    fun buildRow(app: AppData): View {
+    fun buildRow(app: AppData, height: Int): View {
         val inflater: LayoutInflater =
             ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val row = inflater.inflate(R.layout.row, null)
-        val pm = ctx.getPackageManager()
-
         val iconv = row.findViewById(R.id.icon) as ImageView
         iconv.setImageDrawable(app.icon)
         row.setBackgroundColor(app.color)
+        row.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
         return row
     }
 

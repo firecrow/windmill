@@ -33,7 +33,7 @@
 
     <GridView
         android:id="@+id/apps"
-        android:numColumns="4"
+        android:numColumns="5"
         android:layout_gravity="center"
         android:gravity="center"
         android:layout_width="wrap_content"

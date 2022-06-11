@@ -1,33 +1,12 @@
 package com.firecrow.windmill
 
-import android.R.attr.bitmap
-import android.content.ContentValues
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.drawable.AdaptiveIconDrawable
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.graphics.drawable.toBitmap
-import androidx.palette.graphics.Palette
+
 
 class WMActivity : AppCompatActivity() {
     lateinit var adapter: WMAdapter
@@ -41,8 +20,8 @@ class WMActivity : AppCompatActivity() {
 
         val rowBuilder = RowBuilder(this)
 
-        adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder)
         layout = findViewById<GridView>(R.id.apps) as GridView
+        adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder, layout)
         fetcher = Fetcher(this)
         searchObj =
             SearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, this)
