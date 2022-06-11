@@ -14,7 +14,7 @@
 
         <activity
             android:label="Main activity"
-            android:name=".Activity">
+            android:name=".WMActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
