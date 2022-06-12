@@ -6,11 +6,13 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentContainerView
+import androidx.fragment.app.add
+import androidx.fragment.app.commit
 
 
 class WMActivity : AppCompatActivity() {
-    lateinit var adapter: WMAdapter
-    lateinit var layout: GridView
+    lateinit var layout: FragmentContainerView
     lateinit var fetcher: Fetcher
     lateinit var searchObj:SearchObj
 
@@ -18,16 +20,28 @@ class WMActivity : AppCompatActivity() {
         super.onCreate(instance)
         setContentView(R.layout.main)
 
-        val rowBuilder = RowBuilder(this)
 
-        layout = findViewById<GridView>(R.id.apps) as GridView
-        adapter = WMAdapter(this, R.layout.row, arrayListOf<AppData>(), rowBuilder, layout)
+        layout = findViewById<FragmentContainerView>(R.id.apps_fragment) as FragmentContainerView
         fetcher = Fetcher(this)
         searchObj =
             SearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, this)
 
-        setupLayout(this, layout, adapter, searchObj)
+        if (instance == null) {
+            setContent(ScreenToken.GRID)
+        }
+
         update("")
+    }
+
+    fun setContent(screen: ScreenToken){
+        supportFragmentManager.commit {
+            setReorderingAllowed(true)
+            if (screen == ScreenToken.GRID) {
+                add<GridFragment>(R.id.apps_fragment)
+            }else if(screen == ScreenToken.LIST){
+                add<ListFragment>(R.id.apps_fragment)
+            }
+        }
     }
 
     override fun onResume() {
@@ -42,26 +56,19 @@ class WMActivity : AppCompatActivity() {
         imm.hideSoftInputFromWindow(v.windowToken, 0)
     }
 
-    fun setupLayout(ctx: Context, layout: GridView, adapter: WMAdapter, searchObj: SearchObj) {
-        layout.setAdapter(adapter)
-        layout.setOnItemClickListener { parent, view, idx, id ->
-            val app: AppData = adapter.getItem(idx)
-            ctx.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)
-                ?.let { ctx.startActivity(it) }
-        }
-    }
-
     fun update(search: String?) {
+        /*
         adapter.clear()
         val apps = fetcher.fetch(search ?: "")
         apps?.let {
             adapter.addAll(it)
             adapter.notifyDataSetChanged()
         }
+         */
     }
 
     fun scrollTop() {
-        layout.setSelection(0)
+        //layout.setSelection(0)
     }
 
     fun reset() {

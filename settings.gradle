@@ -1,2 +1,9 @@
 rootProject.name='Windmill'
 include ':app'
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+}

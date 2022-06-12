@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.GridView
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ListView
 
 class RowBuilder(val ctx: Context) {
 
@@ -22,8 +23,19 @@ class RowBuilder(val ctx: Context) {
         val iconv = row.findViewById(R.id.icon) as ImageView
         iconv.setImageDrawable(app.icon)
         row.setBackgroundColor(app.color)
-        row.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
+        row.layoutParams.height = height
         return row
+    }
+
+    fun buildCell(app: AppData, height: Int): View {
+        val inflater: LayoutInflater =
+            ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val cell = inflater.inflate(R.layout.cell, null)
+        val iconv = cell.findViewById(R.id.icon) as ImageView
+        iconv.setImageDrawable(app.icon)
+        cell.setBackgroundColor(app.color)
+        cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
+        return cell
     }
 
     fun updateRow(row: View, idx: Int, app: AppData, priorColor: Int): View {
