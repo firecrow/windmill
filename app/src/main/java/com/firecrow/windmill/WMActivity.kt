@@ -5,8 +5,10 @@ import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentContainerView
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
 
@@ -15,6 +17,7 @@ class WMActivity : AppCompatActivity() {
     lateinit var layout: FragmentContainerView
     lateinit var fetcher: Fetcher
     lateinit var searchObj:SearchObj
+    private val model: AppsObservables by viewModels()
 
     override fun onCreate(instance: Bundle?) {
         super.onCreate(instance)
@@ -57,14 +60,7 @@ class WMActivity : AppCompatActivity() {
     }
 
     fun update(search: String?) {
-        /*
-        adapter.clear()
-        val apps = fetcher.fetch(search ?: "")
-        apps?.let {
-            adapter.addAll(it)
-            adapter.notifyDataSetChanged()
-        }
-         */
+        model.searchCriteria.value = search ?: ""
     }
 
     fun scrollTop() {

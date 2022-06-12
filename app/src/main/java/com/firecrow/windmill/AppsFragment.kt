@@ -5,9 +5,13 @@ import android.view.View
 import android.widget.AbsListView
 import android.widget.GridView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 
 open abstract class AppsFragment(resource:Int): Fragment(resource) {
     lateinit var adapter: WMAdapter
+    private val model: AppsObservables by activityViewModels<AppsObservables>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val absList = view.findViewById<AbsListView>(R.id.apps_grid) as AbsListView
@@ -24,11 +28,16 @@ open abstract class AppsFragment(resource:Int): Fragment(resource) {
                     ?.let { ctx?.startActivity(it) }
             }
         }
-        update()
+
+        update("")
+
+        model.searchCriteria.observe(viewLifecycleOwner, Observer<String> { query ->
+            update(query)
+        })
     }
 
-    fun update() {
-        val apps = (activity as WMActivity)?.fetcher.fetch("")
+    fun update(query: String) {
+        val apps = (activity as WMActivity)?.fetcher.fetch(query)
         apps?.let {
             adapter.clear()
             adapter.addAll(it)
