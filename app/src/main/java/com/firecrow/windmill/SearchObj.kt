@@ -2,13 +2,18 @@ package com.firecrow.windmill
 
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.activity.viewModels
+import androidx.fragment.app.activityViewModels
 
 class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
     val input = bar.findViewById<EditText>(R.id.search) as EditText
     val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView
+    val gridNavButton = bar.findViewById<ImageView>(R.id.grid_nav_button) as ImageView
+    val listNavButton = bar.findViewById<ImageView>(R.id.list_nav_button) as ImageView
     var state = SearchState.BLANK
 
     init {
@@ -29,6 +34,15 @@ class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
                 setButton(0)
                 ctx.scrollTop()
             }
+        })
+
+        gridNavButton.setImageResource(R.drawable.grid_icon)
+        gridNavButton.setOnClickListener(View.OnClickListener {
+            ctx.setContent(ScreenToken.GRID)
+        })
+        listNavButton.setImageResource(R.drawable.list_icon)
+        listNavButton.setOnClickListener(View.OnClickListener {
+            ctx.setContent(ScreenToken.LIST)
         })
     }
 

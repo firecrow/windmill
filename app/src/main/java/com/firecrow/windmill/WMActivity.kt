@@ -7,22 +7,19 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentContainerView
-import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.add
-import androidx.fragment.app.commit
+import androidx.fragment.app.*
+import androidx.lifecycle.Observer
 
 
 class WMActivity : AppCompatActivity() {
     lateinit var layout: FragmentContainerView
     lateinit var fetcher: Fetcher
     lateinit var searchObj:SearchObj
-    private val model: AppsObservables by viewModels()
+    val model: AppsObservables by viewModels()
 
     override fun onCreate(instance: Bundle?) {
         super.onCreate(instance)
         setContentView(R.layout.main)
-
 
         layout = findViewById<FragmentContainerView>(R.id.apps_fragment) as FragmentContainerView
         fetcher = Fetcher(this)
@@ -30,19 +27,22 @@ class WMActivity : AppCompatActivity() {
             SearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, this)
 
         if (instance == null) {
-            setContent(ScreenToken.GRID)
+            setupNavigation()
         }
-
         update("")
+    }
+
+    fun setupNavigation(){
+        setContent(ScreenToken.GRID)
     }
 
     fun setContent(screen: ScreenToken){
         supportFragmentManager.commit {
             setReorderingAllowed(true)
             if (screen == ScreenToken.GRID) {
-                add<GridFragment>(R.id.apps_fragment)
+                replace<GridFragment>(R.id.apps_fragment)
             }else if(screen == ScreenToken.LIST){
-                add<ListFragment>(R.id.apps_fragment)
+                replace<ListFragment>(R.id.apps_fragment)
             }
         }
     }

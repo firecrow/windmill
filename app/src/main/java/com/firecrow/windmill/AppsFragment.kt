@@ -19,6 +19,7 @@ open abstract class AppsFragment(resource:Int): Fragment(resource) {
         val rowBuilder = RowBuilder(activity as WMActivity)
 
         adapter = getAdapter(rowBuilder)
+        adapter.setupView(absList)
         val ctx = activity as WMActivity?
         ctx?.let {
             absList.setAdapter(adapter)

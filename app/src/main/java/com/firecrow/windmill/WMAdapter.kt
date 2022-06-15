@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsListView
 import android.widget.ArrayAdapter
+import android.widget.ListView
 
 open class WMAdapter(
     val ctx: Context,
@@ -22,6 +24,7 @@ open class WMAdapter(
         return apps.get(idx)
     }
 
+
     override fun getItemId(idx: Int): Long {
         return idx.toLong()
     }
@@ -35,6 +38,12 @@ open class WMAdapter(
         // odd bug with adding one to cellHeight fix is to increment it down here
         return rowBuilder.updateRow(buildItemContent(item, cellHeight+1), idx, item, priorColor)
     }
+
+    open fun setupView(view: AbsListView){
+        val listView = view as ListView;
+        listView.divider = null
+    }
+
 
     open fun buildItemContent(item: AppData, height: Int): View {
         return rowBuilder.buildRow(item, height)
@@ -51,6 +60,10 @@ class WMGridAdapter(
     apps: ArrayList<AppData>,
     rowBuilder: RowBuilder,
 ) : WMAdapter(ctx, resource, apps, rowBuilder){
+
+    override fun setupView(view: AbsListView){
+        return
+    }
 
     override fun buildItemContent(item: AppData, height: Int): View {
         return rowBuilder.buildCell(item, height)

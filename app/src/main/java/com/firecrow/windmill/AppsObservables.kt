@@ -13,4 +13,7 @@ class AppsObservables: ViewModel() {
     val refreshAppList: MutableLiveData<Boolean> by lazy {
         MutableLiveData<Boolean>()
     }
+    val appView: MutableLiveData<ScreenToken> by lazy {
+        MutableLiveData<ScreenToken>()
+    }
 }
