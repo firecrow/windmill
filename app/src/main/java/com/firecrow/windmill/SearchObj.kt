@@ -1,5 +1,6 @@
 package com.firecrow.windmill
 
+import android.graphics.PorterDuff
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -39,12 +40,26 @@ class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
         gridNavButton.setImageResource(R.drawable.grid_icon)
         gridNavButton.setOnClickListener(View.OnClickListener {
             ctx.setContent(ScreenToken.GRID)
+            setNavIconState(ScreenToken.GRID)
         })
         listNavButton.setImageResource(R.drawable.list_icon)
         listNavButton.setOnClickListener(View.OnClickListener {
             ctx.setContent(ScreenToken.LIST)
+            setNavIconState(ScreenToken.LIST)
         })
     }
+
+    fun setNavIconState(activeNavState:ScreenToken){
+        if(activeNavState == ScreenToken.GRID) {
+            gridNavButton.clearColorFilter()
+            listNavButton.setColorFilter(R.color.nav_icon_tint)
+        }
+        if(activeNavState == ScreenToken.LIST) {
+            gridNavButton.setColorFilter(R.color.nav_icon_tint)
+            listNavButton.clearColorFilter()
+        }
+    }
+
 
     fun setButton(itemPos: Int) {
         if (input.text.length > 0) {

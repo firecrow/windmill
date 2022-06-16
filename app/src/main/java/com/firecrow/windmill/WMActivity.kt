@@ -45,6 +45,7 @@ class WMActivity : AppCompatActivity() {
                 replace<ListFragment>(R.id.apps_fragment)
             }
         }
+        searchObj.setNavIconState(screen)
     }
 
     override fun onResume() {
