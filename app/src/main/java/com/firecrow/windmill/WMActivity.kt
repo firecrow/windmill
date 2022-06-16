@@ -11,25 +11,26 @@ import androidx.fragment.app.*
 import androidx.lifecycle.Observer
 
 
-class WMActivity : AppCompatActivity() {
+open class WMActivity : AppCompatActivity() {
+    lateinit var controller: WMController
     lateinit var layout: FragmentContainerView
-    lateinit var fetcher: Fetcher
-    lateinit var searchObj:SearchObj
     val model: AppsObservables by viewModels()
+    lateinit var fetcher: Fetcher
+
 
     override fun onCreate(instance: Bundle?) {
         super.onCreate(instance)
         setContentView(R.layout.main)
 
-        layout = findViewById<FragmentContainerView>(R.id.apps_fragment) as FragmentContainerView
+        val layout = findViewById<FragmentContainerView>(R.id.apps_fragment) as FragmentContainerView
+        val searchBar = findViewById<LinearLayout>(R.id.search_bar) as LinearLayout
         fetcher = Fetcher(this)
-        searchObj =
-            SearchObj(findViewById<LinearLayout>(R.id.search_bar) as LinearLayout, this)
+        controller = WMController(this, layout, searchBar)
 
         if (instance == null) {
             setupNavigation()
         }
-        update("")
+        controller.update("")
     }
 
     fun setupNavigation(){
@@ -45,34 +46,11 @@ class WMActivity : AppCompatActivity() {
                 replace<ListFragment>(R.id.apps_fragment)
             }
         }
-        searchObj.setNavIconState(screen)
+        controller.searchObj.setNavIconState(screen)
     }
 
     override fun onResume() {
-        reset()
+        controller.reset()
         super.onResume()
-    }
-
-    fun hideKb() {
-        val view: View? = this.getCurrentFocus()
-        val v = view?.let { it } ?: run { View(this) }
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(v.windowToken, 0)
-    }
-
-    fun update(search: String?) {
-        model.searchCriteria.value = search ?: ""
-    }
-
-    fun scrollTop() {
-        //layout.setSelection(0)
-    }
-
-    fun reset() {
-        hideKb()
-        searchObj.input?.setText("")
-        searchObj.input?.clearFocus()
-        update("")
-        scrollTop()
     }
 }

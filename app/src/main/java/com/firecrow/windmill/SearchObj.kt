@@ -21,9 +21,9 @@ class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
 
         button.setOnClickListener { v ->
             if (state == SearchState.SEARCH) {
-                ctx.reset()
+                ctx.controller.reset()
             } else if (state == SearchState.SCROLL) {
-                ctx.scrollTop()
+                ctx.controller.scrollTop()
             }
         }
 
@@ -31,9 +31,9 @@ class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun afterTextChanged(editable: Editable?) {}
             override fun onTextChanged(s: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                ctx.update(s.toString())
+                ctx.controller.update(s.toString())
                 setButton(0)
-                ctx.scrollTop()
+                ctx.controller.scrollTop()
             }
         })
 
@@ -49,13 +49,17 @@ class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
         })
     }
 
+    fun resetNav(){
+        listNavButton.setColorFilter(R.color.nav_icon_tint)
+        gridNavButton.setColorFilter(R.color.nav_icon_tint)
+    }
+
     fun setNavIconState(activeNavState:ScreenToken){
+        resetNav()
         if(activeNavState == ScreenToken.GRID) {
             gridNavButton.clearColorFilter()
-            listNavButton.setColorFilter(R.color.nav_icon_tint)
         }
         if(activeNavState == ScreenToken.LIST) {
-            gridNavButton.setColorFilter(R.color.nav_icon_tint)
             listNavButton.clearColorFilter()
         }
     }
