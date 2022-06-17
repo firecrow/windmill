@@ -6,6 +6,9 @@ buildscript {
     ext.mockitoVersion = '4.6.0'
     ext.mockitoKotlinVersion = '4.0.0'
     ext.mockkVersion = '1.12.4'
+    ext.uiAutomatorVersion = '2.2.0'
+    ext.espressoVersion = '3.4.0'
+    ext.compose_version = '1.1.1'
 
     repositories {
         google()
