@@ -13,7 +13,6 @@ import android.util.Log
 import androidx.palette.graphics.Palette
 
 class Fetcher(val ctx: Context) {
-    val cache = hashMapOf<String, AppData>()
     var apps = arrayListOf<AppData>()
 
     private var mDefaultBackground:Drawable = ColorDrawable(Color.WHITE)

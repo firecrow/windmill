@@ -122,12 +122,12 @@ class ExampleInstrumentedTest {
 
         val drawableRed = ColorDrawable(Color.RED)
         val drawableBlue = ColorDrawable(Color.BLUE)
-        val labelOne = "One"
-        val labelTwo = "Two"
-        val labelThree = "Three"
-        val packageOne = "com.example.one"
-        val packageTwo = "com.example.two"
-        val packageThree = "com.example.three"
+        val labelOne = "Alpha"
+        val labelTwo = "Bravo"
+        val labelThree = "Chalie"
+        val packageOne = "com.example.alpha"
+        val packageTwo = "com.example.bravo"
+        val packageThree = "com.example.charlie"
 
         val app1 = mock(ApplicationInfo::class.java)
         app1.packageName = packageOne
@@ -144,8 +144,11 @@ class ExampleInstrumentedTest {
         `when`(mockPackageManager.getApplicationIcon(app3)).thenReturn(AdaptiveIconDrawable(drawableRed, ColorDrawable()) as Drawable)
         `when`(app3.loadLabel(mockPackageManager)).thenReturn(labelThree)
 
+        // test that they are sorted as well
         val fakeApps = arrayListOf<ApplicationInfo>(
-            app1
+            app1,
+            app3,
+            app2
         )
 
         `when`(
@@ -155,19 +158,59 @@ class ExampleInstrumentedTest {
         `when`(
             mockPackageManager.getLaunchIntentForPackage(packageOne)
         ).thenReturn(Intent())
+        `when`(
+            mockPackageManager.getLaunchIntentForPackage(packageTwo)
+        ).thenReturn(Intent())
+        `when`(
+            mockPackageManager.getLaunchIntentForPackage(packageThree)
+        ).thenReturn(Intent())
 
         `when`(ctx.getPackageManager()).thenReturn(mockPackageManager)
 
-        val apps = fetcher.fetchFromSystem()
+        var apps = fetcher.fetchFromSystem()
         assertEquals(apps.size, 3)
 
-        val appOne = apps.get(0)
+        var appOne = apps.get(0)
         assertEquals(appOne.name, labelOne)
 
-        val appTwo = apps.get(0)
+        var appTwo = apps.get(1)
+        Log.i("fcrow", "app two is.................."+appTwo.packageName)
         assertEquals(appTwo.name, labelTwo)
 
-        val appThree = apps.get(0)
+        var appThree = apps.get(2)
+        Log.i("fcrow", "app thrre is.................."+appThree.packageName)
         assertEquals(appThree.name, labelThree)
+
+        // limit those with null launch intents
+        `when`(
+            mockPackageManager.getLaunchIntentForPackage(packageOne)
+        ).thenReturn(null)
+
+        apps = fetcher.fetchFromSystem()
+        assertEquals(apps.size, 2)
+
+        appTwo = apps.get(0)
+        assertEquals(appTwo.name, labelTwo)
+
+        appThree = apps.get(1)
+        assertEquals(appThree.name, labelThree)
+
+        assertEquals(fetcher.apps.size, 0)
+
+
+        var filterString = "Ch"
+        apps = fetcher.fetch(filterString)
+        assertEquals(apps.size, 1)
+
+        appThree = apps.get(0)
+        assertEquals(appThree.name, labelThree)
+
+        assertNotEquals(fetcher.apps.size, apps.size)
+
+        filterString = ""
+        apps = fetcher.fetch(filterString)
+        assertEquals(apps.size, 2)
+
+        assertEquals(fetcher.apps.size, apps.size)
     }
 }
