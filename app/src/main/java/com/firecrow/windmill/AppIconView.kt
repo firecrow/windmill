@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.icu.lang.UCharacter
 import android.util.AttributeSet
+import android.util.Log
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -62,9 +63,12 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet): ViewGroup(ctx, att
 
     public fun setIcon(icon: AdaptiveIconDrawable){
         iconView.setImageDrawable(icon)
+        Log.d("fcrow", "setting icon for color --------------"+icon.toString())
 
         val background = icon.getBackground()
+        Log.d("fcrow", "setting background "+background.toString())
         val color = getDrawableColor(background)
+        Log.d("fcrow", "setting color returned "+color.toString())
         setBackdrop(color)
 
         invalidate()
@@ -88,11 +92,13 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet): ViewGroup(ctx, att
     }
 
     val backdropColor: Int get() {
+        Log.d("fcrow", "get backdrop for color")
         val background = root.background
         return getDrawableColor(background)
     }
 
     public fun setBackdrop(color:Int){
+       Log.d("fcrow", "setting SET backdrop for color "+color.toString())
        root.background = ColorDrawable(color)
     }
 

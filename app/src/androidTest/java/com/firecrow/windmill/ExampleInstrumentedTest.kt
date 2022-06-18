@@ -9,6 +9,7 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.ShapeDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -52,18 +53,16 @@ class ExampleInstrumentedTest {
 
     fun makeMockApp(color: Int = Color.TRANSPARENT): AppData {
         val logo = MockBitmapDrawable(1).drawable
-        val colorDrawable = ColorDrawable()
-        colorDrawable.color = color
-        val icon = AdaptiveIconDrawable(ColorDrawable(), logo)
+        val colorDrawable = ColorDrawable(color)
+        val icon = AdaptiveIconDrawable(colorDrawable, logo)
         val name = "Test App"
         val packageName = "com.firecrow.TestApp"
-        val color = Color.RED
 
         return AppData(
             name,
             packageName,
             icon,
-            color,
+            Color.TRANSPARENT,
         )
     }
 
@@ -96,10 +95,12 @@ class ExampleInstrumentedTest {
         val height = 100
         val app1 = makeMockApp(color)
         val cell = builder.buildCell(app1, height)
+        Log.i("fcrow", "color for arg is"+color.toString())
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
 
+        Log.i("fcrow", "-> color for arg is"+color.toString())
         assertEquals(iconView.backdropColor, Color.BLACK)
-        assertEquals(cell.layoutParams, height)
+        assertEquals(cell.layoutParams.height, height)
     }
 
     @Test fun testRowBuilder_buildRow() {
