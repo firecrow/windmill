@@ -16,12 +16,11 @@ class RowBuilder(val ctx: Context) {
 
     fun buildRow(app: AppData, height: Int): View {
         val row = inflater.inflate(R.layout.row, null)
+
+        val iconView = row.findViewById<AppIconView>(R.id.icon)
+        iconView.setIcon(app.icon)
+
         val label = row.findViewById(R.id.label) as TextView
-        val cell = inflater.inflate(R.layout.cell, null)
-
-        val iconView = cell.findViewById<AppIconView>(R.id.icon)
-        iconView.icon = app.icon
-
         label.text = app.name
 
         row.layoutParams = LinearLayout.LayoutParams(row.getWidth(), height)
@@ -33,7 +32,7 @@ class RowBuilder(val ctx: Context) {
         val cell = inflater.inflate(R.layout.cell, null)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
 
-        iconView.icon = app.icon
+        iconView.setIcon(app.icon)
 
         cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
 

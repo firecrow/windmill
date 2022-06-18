@@ -29,16 +29,6 @@ open class WMAdapter(
         return idx.toLong()
     }
 
-    override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
-        val priorColor: Int = if (idx > 0) getItem(idx - 1).color else Color.parseColor("#000000")
-        val item = getItem(idx)
-        if(cellHeight == 0){
-            cellHeight = parent.getHeight()/10
-        }
-        // odd bug with adding one to cellHeight fix is to increment it down here
-        return rowBuilder.updateRow(buildItemContent(item, cellHeight+1), idx, item, priorColor)
-    }
-
     open fun setupView(view: AbsListView){
         val listView = view as ListView;
         listView.divider = null

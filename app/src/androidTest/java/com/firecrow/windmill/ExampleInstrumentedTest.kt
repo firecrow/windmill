@@ -62,7 +62,6 @@ class ExampleInstrumentedTest {
             name,
             packageName,
             icon,
-            Color.TRANSPARENT,
         )
     }
 
@@ -75,16 +74,18 @@ class ExampleInstrumentedTest {
 
         val cell = inflater.inflate(R.layout.cell, null)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
-        iconView.icon = app.icon
+        iconView.setIcon(app.icon)
 
-        assertEquals(iconView.backdropColor, color)
+        assertEquals(iconView.backdrop, app.icon.background)
+        assertEquals(iconView.logo, app.icon.foreground)
 
         val containerLayout = iconView.children.first()
         assertEquals(containerLayout is LinearLayout, true)
+        assertEquals((containerLayout as LinearLayout).background, app.icon.background)
 
         val logoView = (containerLayout as LinearLayout).children.first()
         assertEquals(logoView is ImageView, true)
-        assertEquals((logoView as ImageView).drawable, app.icon)
+        assertEquals((logoView as ImageView).drawable, app.icon.foreground)
     }
 
     @Test fun testRowBuilder_buildCell() {
@@ -95,11 +96,10 @@ class ExampleInstrumentedTest {
         val height = 100
         val app1 = makeMockApp(color)
         val cell = builder.buildCell(app1, height)
-        Log.i("fcrow", "color for arg is"+color.toString())
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
 
-        Log.i("fcrow", "-> color for arg is"+color.toString())
-        assertEquals(iconView.backdropColor, Color.BLACK)
+        assertEquals(iconView.backdrop, app1.icon.background)
+        assertEquals(iconView.logo, app1.icon.foreground)
         assertEquals(cell.layoutParams.height, height)
     }
 
@@ -112,7 +112,14 @@ class ExampleInstrumentedTest {
         val row = builder.buildRow(app1, 100)
         val iconView = row.findViewById<AppIconView>(R.id.icon)
 
-        assertEquals(iconView.backdropColor, Color.TRANSPARENT)
+        assertEquals(iconView.backdrop, app1.icon.background)
+        assertEquals(iconView.logo, app1.icon.foreground)
         assertEquals(row.layoutParams.height, height)
+    }
+
+    @Test fun testFetcher_fetch() {
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+        val fetcher = Fetcher(ctx)
+        val apps: ArrayList<AppData> = fetcher.fetchFromSystem()
     }
 }

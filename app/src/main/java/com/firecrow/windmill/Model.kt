@@ -20,5 +20,4 @@ class AppData(
     var name: String,
     var packageName: String,
     var icon: AdaptiveIconDrawable,
-    var color: Int,
 );
