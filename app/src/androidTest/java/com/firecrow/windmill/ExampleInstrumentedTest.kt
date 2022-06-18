@@ -75,7 +75,7 @@ class ExampleInstrumentedTest {
 
         val cell = inflater.inflate(R.layout.cell, null)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
-        iconView.setIcon(app.icon)
+        iconView.icon = app.icon
 
         assertEquals(iconView.backdropColor, color)
 

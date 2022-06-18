@@ -61,22 +61,23 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet): ViewGroup(ctx, att
         }
     }
 
-    public fun setIcon(icon: AdaptiveIconDrawable){
+    var icon: AdaptiveIconDrawable get() {
+        return iconView.drawable as AdaptiveIconDrawable
+    }
+    set(icon){
         iconView.setImageDrawable(icon)
-        Log.d("fcrow", "setting icon for color --------------"+icon.toString())
 
         val background = icon.getBackground()
-        Log.d("fcrow", "setting background "+background.toString())
         val color = getDrawableColor(background)
-        Log.d("fcrow", "setting color returned "+color.toString())
         setBackdrop(color)
 
         invalidate()
         requestLayout()
     }
 
-    public fun getIcon(): Drawable{
-        return iconView.drawable
+    val backdropColor: Int get() {
+        val background = root.background
+        return getDrawableColor(background)
     }
 
     private fun getDrawableColor(drawable: Drawable?): Int{
@@ -86,19 +87,7 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet): ViewGroup(ctx, att
         return Color.TRANSPARENT
     }
 
-    val iconColor: Int get(){
-        val background = iconView.icon?.getBackground()
-        return getDrawableColor(background)
-    }
-
-    val backdropColor: Int get() {
-        Log.d("fcrow", "get backdrop for color")
-        val background = root.background
-        return getDrawableColor(background)
-    }
-
-    public fun setBackdrop(color:Int){
-       Log.d("fcrow", "setting SET backdrop for color "+color.toString())
+    private fun setBackdrop(color:Int){
        root.background = ColorDrawable(color)
     }
 

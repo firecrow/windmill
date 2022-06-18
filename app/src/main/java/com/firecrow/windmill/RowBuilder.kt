@@ -20,7 +20,7 @@ class RowBuilder(val ctx: Context) {
         val cell = inflater.inflate(R.layout.cell, null)
 
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
-        iconView.setIcon(app.icon)
+        iconView.icon = app.icon
 
         label.text = app.name
 
@@ -33,7 +33,7 @@ class RowBuilder(val ctx: Context) {
         val cell = inflater.inflate(R.layout.cell, null)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
 
-        iconView.setIcon(app.icon)
+        iconView.icon = app.icon
 
         cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
 
