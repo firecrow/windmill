@@ -3,18 +3,11 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="horizontal">
-    <LinearLayout
-        android:id="@+id/list_icon_container"
-        android:orientation="vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        >
-        <ImageView
-            android:id="@+id/icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+    <com.firecrow.windmill.AppIconView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/icon"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        />
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

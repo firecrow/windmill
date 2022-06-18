@@ -1,5 +1,6 @@
 package com.firecrow.windmill
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
@@ -13,33 +14,18 @@ class RowBuilder(val ctx: Context) {
     val inflater: LayoutInflater =
         ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
-    fun getRowColor(icon: AdaptiveIconDrawable): Int {
-        // return (icon.background as ColorDrawable).getColor()
-        return 0x00000
-
-    }
-
-    fun getWidth(): Int{
-        val total = (ctx as WMActivity).getWindow().decorView.width
-        val cols = 5;
-        return total/cols;
-    }
-
     fun buildRow(app: AppData, height: Int): View {
-        val inflater: LayoutInflater =
-            ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
         val row = inflater.inflate(R.layout.row, null)
-        val container = row.findViewById(R.id.list_icon_container) as LinearLayout
-        val iconv = row.findViewById(R.id.icon) as ImageView
         val label = row.findViewById(R.id.label) as TextView
+        val cell = inflater.inflate(R.layout.cell, null)
+
+        val iconView = cell.findViewById<AppIconView>(R.id.icon)
+        iconView.setIcon(app.icon)
+        iconView.setBackdrop(app.color)
 
         label.text = app.name
 
-        iconv.setImageDrawable(app.icon)
-
-        container.setBackgroundColor(app.color)
-        container.layoutParams = LinearLayout.LayoutParams(getWidth(), height)
+        row.layoutParams = LinearLayout.LayoutParams(row.getWidth(), height)
 
         return row
     }
@@ -47,8 +33,12 @@ class RowBuilder(val ctx: Context) {
     fun buildCell(app: AppData, height: Int): View {
         val cell = inflater.inflate(R.layout.cell, null)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
+
         iconView.setIcon(app.icon)
-        iconView.setBackdropColor(app.color)
+        iconView.setBackdrop(app.color)
+
+        cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
+
         return cell
     }
 

@@ -2,6 +2,7 @@ package com.firecrow.windmill
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.icu.lang.UCharacter
@@ -59,8 +60,13 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet): ViewGroup(ctx, att
         }
     }
 
-    public fun setIcon(icon: Drawable){
+    public fun setIcon(icon: AdaptiveIconDrawable){
         iconView.setImageDrawable(icon)
+
+        val background = icon.getBackground()
+        val color = getDrawableColor(background)
+        setBackdrop(color)
+
         invalidate()
         requestLayout()
     }
@@ -69,15 +75,25 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet): ViewGroup(ctx, att
         return iconView.drawable
     }
 
-    val backdropColor: Int get() {
-        val background = root.getBackground()
-        if( background is ColorDrawable) {
-            return (background as ColorDrawable).getColor()
+    private fun getDrawableColor(drawable: Drawable?): Int{
+        if( drawable is ColorDrawable) {
+            return (drawable as ColorDrawable).getColor()
         }
         return Color.TRANSPARENT
     }
-    public fun setBackdropColor(color:Int){
-       root.setBackgroundColor(color)
+
+    val iconColor: Int get(){
+        val background = iconView.icon?.getBackground()
+        return getDrawableColor(background)
+    }
+
+    val backdropColor: Int get() {
+        val background = root.background
+        return getDrawableColor(background)
+    }
+
+    public fun setBackdrop(color:Int){
+       root.background = ColorDrawable(color)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {

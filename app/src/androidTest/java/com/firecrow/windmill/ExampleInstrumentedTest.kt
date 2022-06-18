@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.ShapeDrawable
 import android.view.LayoutInflater
 import android.widget.ImageView
@@ -49,9 +50,11 @@ class ExampleInstrumentedTest {
     }
     */
 
-    fun makeMockApp(): AppData {
+    fun makeMockApp(color: Int = Color.TRANSPARENT): AppData {
         val logo = MockBitmapDrawable(1).drawable
-        val iconDrawable = AdaptiveIconDrawable(logo, ShapeDrawable())
+        val colorDrawable = ColorDrawable()
+        colorDrawable.color = color
+        val icon = AdaptiveIconDrawable(ColorDrawable(), logo)
         val name = "Test App"
         val packageName = "com.firecrow.TestApp"
         val color = Color.RED
@@ -59,13 +62,14 @@ class ExampleInstrumentedTest {
         return AppData(
             name,
             packageName,
-            logo,
+            icon,
             color,
         )
     }
 
     @Test fun testAppData() {
-        val app = makeMockApp()
+        val color = Color.RED
+        val app = makeMockApp(color)
 
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val inflater =  ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -73,9 +77,8 @@ class ExampleInstrumentedTest {
         val cell = inflater.inflate(R.layout.cell, null)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
         iconView.setIcon(app.icon)
-        iconView.setBackdropColor(app.color)
 
-        assertEquals(iconView.backdropColor, app.color)
+        assertEquals(iconView.backdropColor, color)
 
         val containerLayout = iconView.children.first()
         assertEquals(containerLayout is LinearLayout, true)
@@ -83,5 +86,32 @@ class ExampleInstrumentedTest {
         val logoView = (containerLayout as LinearLayout).children.first()
         assertEquals(logoView is ImageView, true)
         assertEquals((logoView as ImageView).drawable, app.icon)
+    }
+
+    @Test fun testRowBuilder_buildCell() {
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+        val builder = RowBuilder(ctx)
+
+        val color = Color.BLACK
+        val height = 100
+        val app1 = makeMockApp(color)
+        val cell = builder.buildCell(app1, height)
+        val iconView = cell.findViewById<AppIconView>(R.id.icon)
+
+        assertEquals(iconView.backdropColor, Color.BLACK)
+        assertEquals(cell.layoutParams, height)
+    }
+
+    @Test fun testRowBuilder_buildRow() {
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+        val builder = RowBuilder(ctx)
+
+        val height = 100
+        val app1 = makeMockApp()
+        val row = builder.buildRow(app1, 100)
+        val iconView = row.findViewById<AppIconView>(R.id.icon)
+
+        assertEquals(iconView.backdropColor, Color.TRANSPARENT)
+        assertEquals(row.layoutParams.height, height)
     }
 }

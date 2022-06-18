@@ -1,6 +1,7 @@
 package com.firecrow.windmill
 
 import android.content.pm.ApplicationInfo
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 
 enum class LayoutType {
@@ -18,6 +19,6 @@ enum class SearchState {
 class AppData(
     var name: String,
     var packageName: String,
-    var icon: Drawable,
+    var icon: AdaptiveIconDrawable,
     var color: Int,
 );
