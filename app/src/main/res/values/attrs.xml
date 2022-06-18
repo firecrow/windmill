@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<declare-styleable name="SlotViewGroup"/>
+    <declare-styleable name="AppIconView">
+        <attr name="iconDrawableResource" format="integer" />
+        <attr name="backdropColor" format="integer" />
+        <attr name="backdropDrawableResource" format="integer" />
+    </declare-styleable>
+</resources>

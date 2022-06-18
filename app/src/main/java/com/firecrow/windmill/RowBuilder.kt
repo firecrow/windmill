@@ -3,12 +3,15 @@ package com.firecrow.windmill
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
+import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 
 class RowBuilder(val ctx: Context) {
+    val inflater: LayoutInflater =
+        ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
     fun getRowColor(icon: AdaptiveIconDrawable): Int {
         // return (icon.background as ColorDrawable).getColor()
@@ -42,13 +45,10 @@ class RowBuilder(val ctx: Context) {
     }
 
     fun buildCell(app: AppData, height: Int): View {
-        val inflater: LayoutInflater =
-            ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val cell = inflater.inflate(R.layout.cell, null)
-        val iconv = cell.findViewById(R.id.icon) as ImageView
-        iconv.setImageDrawable(app.icon)
-        cell.setBackgroundColor(app.color)
-        cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
+        val iconView = cell.findViewById<AppIconView>(R.id.icon)
+        iconView.setIcon(app.icon)
+        iconView.setBackdropColor(app.color)
         return cell
     }
 
