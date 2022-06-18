@@ -25,7 +25,7 @@ open abstract class AppsFragment(resource:Int): Fragment(resource) {
             absList.setAdapter(adapter)
             absList.setOnItemClickListener { parent, view, idx, id ->
                 val app: AppData = adapter.getItem(idx)
-                it.getPackageManager().getLaunchIntentForPackage(app.appInfo.packageName)
+                it.getPackageManager().getLaunchIntentForPackage(app.packageName)
                     ?.let { ctx?.startActivity(it) }
             }
         }

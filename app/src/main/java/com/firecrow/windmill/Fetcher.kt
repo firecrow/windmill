@@ -45,11 +45,10 @@ class Fetcher(val ctx: Context) {
             }
             Log.i("fcrow", "color ${color.toString()}")
             items.add(AppData(
-                app,
                 app.loadLabel(pm).toString(),
+                app.packageName,
                 icon,
                 color,
-                LayoutType.APP
             ))
         }
         items.sortBy { app -> app.name }

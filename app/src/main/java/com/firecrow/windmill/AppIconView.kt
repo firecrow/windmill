@@ -1,6 +1,8 @@
 package com.firecrow.windmill
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.icu.lang.UCharacter
 import android.util.AttributeSet
@@ -67,6 +69,13 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet): ViewGroup(ctx, att
         return iconView.drawable
     }
 
+    val backdropColor: Int get() {
+        val background = root.getBackground()
+        if( background is ColorDrawable) {
+            return (background as ColorDrawable).getColor()
+        }
+        return Color.TRANSPARENT
+    }
     public fun setBackdropColor(color:Int){
        root.setBackgroundColor(color)
     }

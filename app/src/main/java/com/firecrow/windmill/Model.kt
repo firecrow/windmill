@@ -16,9 +16,8 @@ enum class SearchState {
 
 
 class AppData(
-    val appInfo: ApplicationInfo,
     var name: String,
+    var packageName: String,
     var icon: Drawable,
     var color: Int,
-    val type: LayoutType
 );
