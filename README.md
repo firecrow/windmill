@@ -16,3 +16,6 @@ ScreenToken.kt - constant used to determine which framgnet to show
 SearchObj.kt - behavior to manage the search bar interactivity including navigation icons
 WMActivity.kt - main activity with everything that needs to be shared across the system
 WMAdapter.kt - contains adapters for the list and grid view
+
+
+I"ve decided to factor our ui components into view components, it feels really good to have thier logic encapsulated in a seperate place and have them accessible via xml for quick configuration of the container and attributes, though a lot of code happens in code now instead of xml I think the components themsleves are a less frequencly changing part than the asesembly of those components
