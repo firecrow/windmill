@@ -1,14 +1,17 @@
 package com.firecrow.windmill
 
+import android.app.Application
 import android.content.Context
-import android.graphics.Bitmap
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.ImageView
@@ -19,9 +22,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.ByteArrayInputStream
-import java.io.InputStream
-import java.util.stream.Stream
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 
 
 private class MockBitmapDrawable(val id: Int) {
@@ -42,14 +44,6 @@ class ExampleInstrumentedTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("com.firecrow.windmill", appContext.packageName)
     }
-    /*
-    @Test fun testEvent() {
-        launchActivity<WMActivity>().onActivity {
-            val barLayout = it.findViewById<LinearLayout>(R.id.search_bar) as LinearLayout
-            val searchObj = SearchObj(barLayout,it)
-        }
-    }
-    */
 
     fun makeMockApp(color: Int = Color.TRANSPARENT): AppData {
         val logo = MockBitmapDrawable(1).drawable
@@ -65,12 +59,13 @@ class ExampleInstrumentedTest {
         )
     }
 
-    @Test fun testAppData() {
+    @Test
+    fun testAppData() {
         val color = Color.RED
         val app = makeMockApp(color)
 
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        val inflater =  ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val inflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
         val cell = inflater.inflate(R.layout.cell, null)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
@@ -88,7 +83,8 @@ class ExampleInstrumentedTest {
         assertEquals((logoView as ImageView).drawable, app.icon.foreground)
     }
 
-    @Test fun testRowBuilder_buildCell() {
+    @Test
+    fun testRowBuilder_buildCell() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val builder = RowBuilder(ctx)
 
@@ -103,7 +99,8 @@ class ExampleInstrumentedTest {
         assertEquals(cell.layoutParams.height, height)
     }
 
-    @Test fun testRowBuilder_buildRow() {
+    @Test
+    fun testRowBuilder_buildRow() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val builder = RowBuilder(ctx)
 
@@ -117,9 +114,60 @@ class ExampleInstrumentedTest {
         assertEquals(row.layoutParams.height, height)
     }
 
-    @Test fun testFetcher_fetch() {
-        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+    @Test
+    fun testFetcher_fetch() {
+        val ctx = mock(WMActivity::class.java)
         val fetcher = Fetcher(ctx)
-        val apps: ArrayList<AppData> = fetcher.fetchFromSystem()
+        val mockPackageManager = mock(PackageManager::class.java)
+
+        val drawableRed = ColorDrawable(Color.RED)
+        val drawableBlue = ColorDrawable(Color.BLUE)
+        val labelOne = "One"
+        val labelTwo = "Two"
+        val labelThree = "Three"
+        val packageOne = "com.example.one"
+        val packageTwo = "com.example.two"
+        val packageThree = "com.example.three"
+
+        val app1 = mock(ApplicationInfo::class.java)
+        app1.packageName = packageOne
+        `when`(mockPackageManager.getApplicationIcon(app1)).thenReturn(AdaptiveIconDrawable(drawableRed, ColorDrawable()) as Drawable)
+        `when`(app1.loadLabel(mockPackageManager)).thenReturn(labelOne)
+
+        val app2 = mock(ApplicationInfo::class.java)
+        app2.packageName = packageTwo
+        `when`(mockPackageManager.getApplicationIcon(app2)).thenReturn(AdaptiveIconDrawable(drawableRed, ColorDrawable()) as Drawable)
+        `when`(app2.loadLabel(mockPackageManager)).thenReturn(labelTwo)
+
+        val app3 = mock(ApplicationInfo::class.java)
+        app3.packageName = packageThree
+        `when`(mockPackageManager.getApplicationIcon(app3)).thenReturn(AdaptiveIconDrawable(drawableRed, ColorDrawable()) as Drawable)
+        `when`(app3.loadLabel(mockPackageManager)).thenReturn(labelThree)
+
+        val fakeApps = arrayListOf<ApplicationInfo>(
+            app1
+        )
+
+        `when`(
+            mockPackageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        ).thenReturn(fakeApps)
+
+        `when`(
+            mockPackageManager.getLaunchIntentForPackage(packageOne)
+        ).thenReturn(Intent())
+
+        `when`(ctx.getPackageManager()).thenReturn(mockPackageManager)
+
+        val apps = fetcher.fetchFromSystem()
+        assertEquals(apps.size, 3)
+
+        val appOne = apps.get(0)
+        assertEquals(appOne.name, labelOne)
+
+        val appTwo = apps.get(0)
+        assertEquals(appTwo.name, labelTwo)
+
+        val appThree = apps.get(0)
+        assertEquals(appThree.name, labelThree)
     }
 }
