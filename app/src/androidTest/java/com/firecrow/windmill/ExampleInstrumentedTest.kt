@@ -9,6 +9,9 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ShapeDrawable
 import android.view.LayoutInflater
+import android.widget.ImageView
+import android.widget.LinearLayout
+import androidx.core.view.children
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
@@ -45,19 +48,24 @@ class ExampleInstrumentedTest {
         }
     }
     */
-    @Test fun testAppData() {
+
+    fun makeMockApp(): AppData {
         val logo = MockBitmapDrawable(1).drawable
         val iconDrawable = AdaptiveIconDrawable(logo, ShapeDrawable())
         val name = "Test App"
         val packageName = "com.firecrow.TestApp"
         val color = Color.RED
 
-        val app = AppData(
+        return AppData(
             name,
             packageName,
             logo,
             color,
         )
+    }
+
+    @Test fun testAppData() {
+        val app = makeMockApp()
 
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val inflater =  ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -69,5 +77,11 @@ class ExampleInstrumentedTest {
 
         assertEquals(iconView.backdropColor, app.color)
 
+        val containerLayout = iconView.children.first()
+        assertEquals(containerLayout is LinearLayout, true)
+
+        val logoView = (containerLayout as LinearLayout).children.first()
+        assertEquals(logoView is ImageView, true)
+        assertEquals((logoView as ImageView).drawable, app.icon)
     }
 }
