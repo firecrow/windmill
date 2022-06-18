@@ -21,3 +21,6 @@ WMAdapter.kt - contains adapters for the list and grid view
 I"ve decided to factor our ui components into view components, it feels really good to have thier logic encapsulated in a seperate place and have them accessible via xml for quick configuration of the container and attributes, though a lot of code happens in code now instead of xml I think the components themsleves are a less frequencly changing part than the asesembly of those components
 
 got the appiconview unit test to work, created a getter for backdropColor, the implementation test is much nicer with a smaller component
+
+
+tests found a few things, now setting the background from the assignment of the icon, and refactored the detectiong of hte color, icon is always an adaptiveicondrawable now with a background and a foreground, if the icon from the system is a regular drawable I make that the foreground and give it a transparent background.
