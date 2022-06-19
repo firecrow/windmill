@@ -5,16 +5,16 @@ import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsListView
+import android.widget.Adapter
 import android.widget.ArrayAdapter
 import android.widget.ListView
 
 open class WMAdapter(
     val ctx: Context,
-    resource: Int,
     var apps: ArrayList<AppData>,
     val rowBuilder: RowBuilder,
 ) :
-    ArrayAdapter<AppData>(ctx, resource, apps) {
+    ArrayAdapter<AppData>(ctx, R.layout.row, R.id.icon, apps) {
     var cellHeight:Int = 0;
     override fun getCount(): Int {
         return apps.count()
@@ -24,16 +24,10 @@ open class WMAdapter(
         return apps.get(idx)
     }
 
-
-    override fun getItemId(idx: Int): Long {
-        return idx.toLong()
-    }
-
     open fun setupView(view: AbsListView){
         val listView = view as ListView;
         listView.divider = null
     }
-
 
     open fun buildItemContent(item: AppData, height: Int): View {
         return rowBuilder.buildRow(item, height)
@@ -44,20 +38,28 @@ open class WMAdapter(
     }
 }
 
-class WMGridAdapter(
-    ctx: Context,
-    resource: Int,
-    apps: ArrayList<AppData>,
-    rowBuilder: RowBuilder,
-) : WMAdapter(ctx, resource, apps, rowBuilder){
-
-    override fun setupView(view: AbsListView){
-        return
+open class WMGridAdapter(
+    val ctx: Context,
+    var apps: ArrayList<AppData>,
+    val rowBuilder: RowBuilder,
+) :
+    ArrayAdapter<AppData>(ctx, R.layout.cell, R.id.icon, apps) {
+    var cellHeight:Int = 100;
+    override fun getCount(): Int {
+        return apps.count()
     }
 
-    override fun buildItemContent(item: AppData, height: Int): View {
-        return rowBuilder.buildCell(item, height)
+    override fun getItem(idx: Int): AppData {
+        return apps.get(idx)
+    }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val item = apps.get(position)
+        return rowBuilder.buildCell(item, cellHeight)
+    }
+
+    fun resetHeight(){
+        cellHeight = 0
     }
 }
-
 

@@ -1,5 +1,6 @@
 package com.firecrow.windmill
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -212,5 +213,16 @@ class ExampleInstrumentedTest {
         assertEquals(apps.size, 2)
 
         assertEquals(fetcher.apps.size, apps.size)
+    }
+
+    @Test
+    fun testSearchObj() {
+        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+        val inflater: LayoutInflater =
+            ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
+        val main = inflater.inflate(R.layout.main, null)
+        val slot = main.findViewById<SlotViewGroup>(R.id.tray) as SlotViewGroup
+        assert(slot is SlotViewGroup)
     }
 }

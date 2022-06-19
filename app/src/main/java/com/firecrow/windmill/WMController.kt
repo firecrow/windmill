@@ -6,7 +6,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import androidx.fragment.app.FragmentContainerView
 
-open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, val searchBar:LinearLayout) {
+open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, val searchBar:SlotViewGroup) {
     val searchObj = SearchObj(searchBar, ctx)
 
     fun hideKb() {

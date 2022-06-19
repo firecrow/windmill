@@ -10,7 +10,9 @@ import android.widget.LinearLayout
 import androidx.activity.viewModels
 import androidx.fragment.app.activityViewModels
 
-class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
+class SearchObj(val slot:SlotViewGroup, val ctx: WMActivity) {
+    val layoutResource = R.layout.search_bar
+    val bar = ctx.layoutInflater.inflate(layoutResource, null)
     val input = bar.findViewById<EditText>(R.id.search) as EditText
     val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView
     val gridNavButton = bar.findViewById<ImageView>(R.id.grid_nav_button) as ImageView
@@ -47,6 +49,8 @@ class SearchObj(val bar: LinearLayout, val ctx: WMActivity) {
             ctx.setContent(ScreenToken.LIST)
             setNavIconState(ScreenToken.LIST)
         })
+
+        slot.addView(bar)
     }
 
     fun resetNav(){

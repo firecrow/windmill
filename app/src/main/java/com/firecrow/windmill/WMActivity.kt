@@ -21,10 +21,10 @@ open class WMActivity : AppCompatActivity() {
     override fun onCreate(instance: Bundle?) {
         super.onCreate(instance)
         setContentView(R.layout.main)
+        fetcher = Fetcher(this)
 
         val layout = findViewById<FragmentContainerView>(R.id.apps_fragment) as FragmentContainerView
-        val searchBar = findViewById<LinearLayout>(R.id.search_bar) as LinearLayout
-        fetcher = Fetcher(this)
+        val searchBar = findViewById<LinearLayout>(R.id.tray) as SlotViewGroup
         controller = WMController(this, layout, searchBar)
 
         if (instance == null) {
