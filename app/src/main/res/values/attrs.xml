@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<declare-styleable name="SlotViewGroup"/>
-<declare-styleable name="AppIconView" />
+    <declare-styleable name="SlotViewGroup"/>
+    <declare-styleable name="AppIconView" >
+        <attr name="iconSize" format="dimension"/>
+    </declare-styleable>
 </resources>

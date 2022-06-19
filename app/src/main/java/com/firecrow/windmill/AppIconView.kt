@@ -29,9 +29,14 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet) : ViewGroup(ctx, at
             .apply {
 
                 try {
+
+                    val dimen = getDimension(R.styleable.AppIconView_iconSize, 100.0f)
+                    val size = getDimensionPixelSize(dimen.toInt(), 100)
+
                     // create the image
                     iconView = ImageView(ctx)
                     iconView.foregroundGravity = Gravity.CENTER
+                    iconView.layoutParams = LinearLayout.LayoutParams(size, size)
 
                     // create a layout to hold and center the icon
                     root = LinearLayout(ctx)
