@@ -1,8 +1,10 @@
 package com.firecrow.windmill
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.icu.lang.UCharacter
@@ -13,12 +15,14 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
+import android.widget.TableLayout
 import androidx.core.content.res.ResourcesCompat
 import kotlinx.android.synthetic.main.cell.view.*
 
 class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx, attrs) {
     var iconView: ImageView
-    var root: LinearLayout
+    // var root: LinearLayout
+    var size: Int = 100
 
     init {
         val attsArray = context.theme.obtainStyledAttributes(
@@ -28,22 +32,23 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx,
         )
         try {
 
-            val size = attsArray.getDimension(R.styleable.AppIconView_logoSize, 100.0f).toInt()
+            size = attsArray.getDimension(R.styleable.AppIconView_logoSize, 100.0f).toInt()
 
             // create the image
             iconView = ImageView(ctx)
-            val iconParams = LinearLayout.LayoutParams(size, size)
+            //val iconParams = LinearLayout.LayoutParams(size, size)
+            val iconParams = TableLayout.LayoutParams(size, size, 1f)
             iconParams.gravity = Gravity.CENTER
             iconView.layoutParams = iconParams
 
             // create a layout to hold and center the icon
-            root = LinearLayout(ctx)
-            root.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            root.orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT)
+            orientation = LinearLayout.VERTICAL
+            gravity=Gravity.CENTER
 
-            // assign the views
-            root.addView(iconView)
-            addView(root)
+            addView(iconView)
         } finally {
             attsArray.recycle()
         }
@@ -51,7 +56,7 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx,
 
     fun setIcon(icon: AdaptiveIconDrawable){
         iconView.setImageDrawable(icon.foreground)
-        root.background = icon.background
+        background = icon.background
 
         invalidate()
         requestLayout()
@@ -63,10 +68,6 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx,
 
     val backdrop: Drawable
         get() {
-            return root.background
+            return background
         }
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        root.layout(0, 0, root.getMeasuredWidth(), root.getMeasuredHeight());
-    }
 }
