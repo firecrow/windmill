@@ -16,39 +16,37 @@ import android.widget.LinearLayout.VERTICAL
 import androidx.core.content.res.ResourcesCompat
 import kotlinx.android.synthetic.main.cell.view.*
 
-class AppIconView(val ctx: Context, val attrs: AttributeSet) : ViewGroup(ctx, attrs) {
+class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx, attrs) {
     var iconView: ImageView
     var root: LinearLayout
 
     init {
-        context.theme.obtainStyledAttributes(
+        val attsArray = context.theme.obtainStyledAttributes(
             attrs,
-            R.styleable.SlotViewGroup,
+            R.styleable.AppIconView,
             0, 0
         )
-            .apply {
+        try {
 
-                try {
+            val size = attsArray.getDimension(R.styleable.AppIconView_logoSize, 100.0f).toInt()
 
-                    val dimen = getDimension(R.styleable.AppIconView_iconSize, 100.0f)
-                    val size = getDimensionPixelSize(dimen.toInt(), 100)
+            // create the image
+            iconView = ImageView(ctx)
+            val iconParams = LinearLayout.LayoutParams(size, size)
+            iconParams.gravity = Gravity.CENTER
+            iconView.layoutParams = iconParams
 
-                    // create the image
-                    iconView = ImageView(ctx)
-                    iconView.foregroundGravity = Gravity.CENTER
-                    iconView.layoutParams = LinearLayout.LayoutParams(size, size)
+            // create a layout to hold and center the icon
+            root = LinearLayout(ctx)
+            root.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            root.orientation = LinearLayout.VERTICAL
 
-                    // create a layout to hold and center the icon
-                    root = LinearLayout(ctx)
-                    root.orientation = LinearLayout.VERTICAL
-
-                    // assign the views
-                    root.addView(iconView)
-                    addView(root)
-                } finally {
-                    recycle()
-                }
-            }
+            // assign the views
+            root.addView(iconView)
+            addView(root)
+        } finally {
+            attsArray.recycle()
+        }
     }
 
     fun setIcon(icon: AdaptiveIconDrawable){

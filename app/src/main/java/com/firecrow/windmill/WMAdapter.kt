@@ -44,7 +44,7 @@ open class WMGridAdapter(
     val rowBuilder: RowBuilder,
 ) :
     ArrayAdapter<AppData>(ctx, R.layout.cell, R.id.icon, apps) {
-    var cellHeight:Int = 100;
+    var cellHeight:Int = 0;
     override fun getCount(): Int {
         return apps.count()
     }
@@ -55,7 +55,9 @@ open class WMGridAdapter(
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val item = apps.get(position)
-        return rowBuilder.buildCell(item, cellHeight)
+        if(cellHeight == 0)
+            cellHeight = (ctx as WMActivity).layout.height / 10
+        return rowBuilder.buildCell(item, cellHeight+1)
     }
 
     fun resetHeight(){

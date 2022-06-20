@@ -2,6 +2,6 @@
 <resources>
     <declare-styleable name="SlotViewGroup"/>
     <declare-styleable name="AppIconView" >
-        <attr name="iconSize" format="dimension"/>
+        <attr name="logoSize" format="dimension"/>
     </declare-styleable>
 </resources>
