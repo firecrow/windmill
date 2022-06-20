@@ -6,11 +6,14 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Color.*
+import android.graphics.PorterDuff
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.palette.graphics.Palette
+import kotlin.random.Random
 
 class Fetcher(val ctx: Context) {
     var apps = arrayListOf<AppData>()
@@ -35,13 +38,16 @@ class Fetcher(val ctx: Context) {
     }
 
     fun asAdaptive(icon: Drawable): AdaptiveIconDrawable{
-        var defaultBackground = ColorDrawable(Color.RED)
+        val seed = (20 * Random.nextFloat()).toInt()
+        val bgColor = argb(seed, seed, seed, seed)
+
+        var defaultBackground = ColorDrawable(Color.WHITE)
 
         if(icon !is AdaptiveIconDrawable){
-            Log.i("fcrow", "NOT ADAPTIVE:"+icon.toString())
-            Log.i("fcrow", "NOT ADAPTIVE BOUNDS:"+icon.getBounds().toString())
             return AdaptiveIconDrawable(defaultBackground, icon)
         }
+        icon.background.setTint(bgColor)
+        icon.background.setTintMode(PorterDuff.Mode.DARKEN)
         return icon
     }
 

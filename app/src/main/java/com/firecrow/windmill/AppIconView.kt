@@ -46,7 +46,6 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx,
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT)
             orientation = LinearLayout.VERTICAL
-            gravity=Gravity.CENTER
 
             addView(iconView)
         } finally {
