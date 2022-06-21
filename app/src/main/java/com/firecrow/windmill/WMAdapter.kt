@@ -9,7 +9,7 @@ import android.widget.Adapter
 import android.widget.ArrayAdapter
 import android.widget.ListView
 
-open class WMAdapter(
+class WMListAdapter(
     val ctx: Context,
     var apps: ArrayList<AppData>,
     val rowBuilder: RowBuilder,
@@ -24,13 +24,11 @@ open class WMAdapter(
         return apps.get(idx)
     }
 
-    open fun setupView(view: AbsListView){
-        val listView = view as ListView;
-        listView.divider = null
-    }
-
-    open fun buildItemContent(item: AppData, height: Int): View {
-        return rowBuilder.buildRow(item, height)
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val item = apps.get(position)
+        if(cellHeight == 0)
+            cellHeight = (ctx as WMActivity).layout.height /15
+        return rowBuilder.buildRow(item, cellHeight+1)
     }
 
     fun resetHeight(){
@@ -38,7 +36,7 @@ open class WMAdapter(
     }
 }
 
-open class WMGridAdapter(
+class WMGridAdapter(
     val ctx: Context,
     var apps: ArrayList<AppData>,
     val rowBuilder: RowBuilder,
@@ -57,7 +55,7 @@ open class WMGridAdapter(
         val item = apps.get(position)
         if(cellHeight == 0)
             cellHeight = (ctx as WMActivity).layout.height / 10
-        return rowBuilder.buildCell(item, cellHeight+1)
+        return rowBuilder.buildCell(item, cellHeight+1, position % 2 != 0)
     }
 
     fun resetHeight(){

@@ -2,9 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="@color/colorAccent"
     android:orientation="horizontal">
     <com.firecrow.windmill.AppIconView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:windmill="http://schemas.android.com/apk/res-auto"
         android:id="@+id/icon"
+        windmill:logoSize="60dp"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         />
