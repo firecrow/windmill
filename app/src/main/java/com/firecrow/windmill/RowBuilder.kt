@@ -34,14 +34,12 @@ class RowBuilder(val ctx: Context) {
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
 
         iconView.setIcon(app.icon)
-
-        cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
-
         if(isOdd){
-            val icon = cell.findViewById<AppIconView>(R.id.icon) as AppIconView
-            icon.tint = 0.03f
+            iconView.tint = 0.03f
         }
         isOdd = !isOdd
+
+        cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
 
         return cell
     }
