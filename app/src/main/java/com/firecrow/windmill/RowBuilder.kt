@@ -13,6 +13,7 @@ import android.widget.*
 class RowBuilder(val ctx: Context) {
     val inflater: LayoutInflater =
         ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+    var isOdd = false
 
     fun buildRow(app: AppData, height: Int): View {
         val row = inflater.inflate(R.layout.row, null)
@@ -35,6 +36,12 @@ class RowBuilder(val ctx: Context) {
         iconView.setIcon(app.icon)
 
         cell.layoutParams = LinearLayout.LayoutParams(GridView.AUTO_FIT, height)
+
+        if(isOdd){
+            val icon = cell.findViewById<AppIconView>(R.id.icon) as AppIconView
+            icon.tint = 0.03f
+        }
+        isOdd = !isOdd
 
         return cell
     }

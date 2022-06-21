@@ -3,6 +3,7 @@ package com.firecrow.windmill
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.PorterDuff
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
@@ -18,11 +19,13 @@ import android.widget.LinearLayout.VERTICAL
 import android.widget.TableLayout
 import androidx.core.content.res.ResourcesCompat
 import kotlinx.android.synthetic.main.cell.view.*
+import kotlin.random.Random
 
 class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx, attrs) {
     var iconView: ImageView
     // var root: LinearLayout
     var size: Int = 100
+    var mTint: Float = 0f
 
     init {
         val attsArray = context.theme.obtainStyledAttributes(
@@ -36,18 +39,21 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx,
 
             // create the image
             iconView = ImageView(ctx)
-            //val iconParams = LinearLayout.LayoutParams(size, size)
-            val iconParams = TableLayout.LayoutParams(size, size, 1f)
-            iconParams.gravity = Gravity.CENTER
+            val iconParams = LinearLayout.LayoutParams(size, size)
             iconView.layoutParams = iconParams
 
             // create a layout to hold and center the icon
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT)
+            // add a layout to center the image
+            val l = LinearLayout(ctx)
+            l.layoutParams = TableLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            l.gravity = Gravity.CENTER
+
             orientation = LinearLayout.VERTICAL
 
-            addView(iconView)
+            l.addView(iconView)
+            addView(l)
         } finally {
             attsArray.recycle()
         }
@@ -69,4 +75,15 @@ class AppIconView(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx,
         get() {
             return background
         }
+
+    var tint: Float get() {
+        return  mTint
+    }
+    set(amount:Float){
+        val seed = (255 * amount).toInt()
+        val bgColor = Color.argb(seed, seed, seed, seed)
+        background.setTint(bgColor)
+        background.setTintMode(PorterDuff.Mode.DARKEN)
+        mTint = tint
+    }
 }

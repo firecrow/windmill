@@ -38,16 +38,11 @@ class Fetcher(val ctx: Context) {
     }
 
     fun asAdaptive(icon: Drawable): AdaptiveIconDrawable{
-        val seed = (20 * Random.nextFloat()).toInt()
-        val bgColor = argb(seed, seed, seed, seed)
-
         var defaultBackground = ColorDrawable(Color.WHITE)
 
         if(icon !is AdaptiveIconDrawable){
             return AdaptiveIconDrawable(defaultBackground, icon)
         }
-        icon.background.setTint(bgColor)
-        icon.background.setTintMode(PorterDuff.Mode.DARKEN)
         return icon
     }
 
