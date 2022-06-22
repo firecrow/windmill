@@ -3,28 +3,24 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="horizontal">
-    <LinearLayout
-        android:id="@+id/list_icon_container"
-        android:orientation="vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        >
-        <ImageView
-            android:id="@+id/icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+    <com.firecrow.windmill.AppIconView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:windmill="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/icon"
+        windmill:logoSize="60dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        />
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:padding="8dp"
+        android:gravity="center"
         android:orientation="vertical">
         >
         <TextView
             android:id="@+id/label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:fontFamily="sans-serif"
             android:textStyle="bold"
             android:textColor="@color/white" />

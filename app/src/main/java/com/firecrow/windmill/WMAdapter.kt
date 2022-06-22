@@ -5,17 +5,16 @@ import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AbsListView
+import android.widget.Adapter
 import android.widget.ArrayAdapter
 import android.widget.ListView
 
-open class WMAdapter(
-    val ctx: Context,
-    resource: Int,
+class WMListAdapter(
+    val ctx: WMActivity,
     var apps: ArrayList<AppData>,
     val rowBuilder: RowBuilder,
 ) :
-    ArrayAdapter<AppData>(ctx, resource, apps) {
-    var cellHeight:Int = 0;
+    ArrayAdapter<AppData>(ctx, R.layout.row, R.id.icon, apps) {
     override fun getCount(): Int {
         return apps.count()
     }
@@ -24,50 +23,31 @@ open class WMAdapter(
         return apps.get(idx)
     }
 
-
-    override fun getItemId(idx: Int): Long {
-        return idx.toLong()
-    }
-
-    override fun getView(idx: Int, view: View?, parent: ViewGroup): View {
-        val priorColor: Int = if (idx > 0) getItem(idx - 1).color else Color.parseColor("#000000")
-        val item = getItem(idx)
-        if(cellHeight == 0){
-            cellHeight = parent.getHeight()/10
-        }
-        // odd bug with adding one to cellHeight fix is to increment it down here
-        return rowBuilder.updateRow(buildItemContent(item, cellHeight+1), idx, item, priorColor)
-    }
-
-    open fun setupView(view: AbsListView){
-        val listView = view as ListView;
-        listView.divider = null
-    }
-
-
-    open fun buildItemContent(item: AppData, height: Int): View {
-        return rowBuilder.buildRow(item, height)
-    }
-
-    fun resetHeight(){
-        cellHeight = 0
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val item = apps.get(position)
+        val cellSize = ctx.controller.cellSize
+        return rowBuilder.buildRow(item, cellSize.y+1, cellSize.x+1, (ctx as WMActivity).controller.query)
     }
 }
 
 class WMGridAdapter(
-    ctx: Context,
-    resource: Int,
-    apps: ArrayList<AppData>,
-    rowBuilder: RowBuilder,
-) : WMAdapter(ctx, resource, apps, rowBuilder){
-
-    override fun setupView(view: AbsListView){
-        return
+    val ctx: WMActivity,
+    var apps: ArrayList<AppData>,
+    val rowBuilder: RowBuilder,
+) :
+    ArrayAdapter<AppData>(ctx, R.layout.cell, R.id.icon, apps) {
+    override fun getCount(): Int {
+        return apps.count()
     }
 
-    override fun buildItemContent(item: AppData, height: Int): View {
-        return rowBuilder.buildCell(item, height)
+    override fun getItem(idx: Int): AppData {
+        return apps.get(idx)
+    }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        val item = apps.get(position)
+        val cellSize = ctx.controller.cellSize
+        return rowBuilder.buildCell(item, cellSize.y+1, position % 2 != 0)
     }
 }
-
 

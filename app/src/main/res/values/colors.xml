@@ -6,4 +6,5 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="nav_icon_tint">#FFDDDD00</color>
+    <color name="search_grey">#FF333333</color>
 </resources>
