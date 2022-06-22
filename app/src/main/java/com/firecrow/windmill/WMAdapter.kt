@@ -28,7 +28,7 @@ class WMListAdapter(
         val item = apps.get(position)
         if(cellHeight == 0)
             cellHeight = (ctx as WMActivity).layout.height /15
-        return rowBuilder.buildRow(item, cellHeight+1)
+        return rowBuilder.buildRow(item, cellHeight+1, (ctx as WMActivity).controller.query)
     }
 
     fun resetHeight(){
