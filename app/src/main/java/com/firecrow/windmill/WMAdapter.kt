@@ -10,12 +10,11 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 
 class WMListAdapter(
-    val ctx: Context,
+    val ctx: WMActivity,
     var apps: ArrayList<AppData>,
     val rowBuilder: RowBuilder,
 ) :
     ArrayAdapter<AppData>(ctx, R.layout.row, R.id.icon, apps) {
-    var cellHeight:Int = 0;
     override fun getCount(): Int {
         return apps.count()
     }
@@ -26,23 +25,17 @@ class WMListAdapter(
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val item = apps.get(position)
-        if(cellHeight == 0)
-            cellHeight = (ctx as WMActivity).layout.height /15
-        return rowBuilder.buildRow(item, cellHeight+1, (ctx as WMActivity).controller.query)
-    }
-
-    fun resetHeight(){
-        cellHeight = 0
+        val cellSize = ctx.controller.cellSize
+        return rowBuilder.buildRow(item, cellSize.y+1, cellSize.x+1, (ctx as WMActivity).controller.query)
     }
 }
 
 class WMGridAdapter(
-    val ctx: Context,
+    val ctx: WMActivity,
     var apps: ArrayList<AppData>,
     val rowBuilder: RowBuilder,
 ) :
     ArrayAdapter<AppData>(ctx, R.layout.cell, R.id.icon, apps) {
-    var cellHeight:Int = 0;
     override fun getCount(): Int {
         return apps.count()
     }
@@ -53,13 +46,8 @@ class WMGridAdapter(
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val item = apps.get(position)
-        if(cellHeight == 0)
-            cellHeight = (ctx as WMActivity).layout.height / 10
-        return rowBuilder.buildCell(item, cellHeight+1, position % 2 != 0)
-    }
-
-    fun resetHeight(){
-        cellHeight = 0
+        val cellSize = ctx.controller.cellSize
+        return rowBuilder.buildCell(item, cellSize.y+1, position % 2 != 0)
     }
 }
 

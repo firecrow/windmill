@@ -16,7 +16,7 @@ class RowBuilder(val ctx: Context) {
     val inflater: LayoutInflater =
         ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
-    fun buildRow(app: AppData, height: Int, query: String): View {
+    fun buildRow(app: AppData, height: Int, width: Int, query: String): View {
         val row = inflater.inflate(R.layout.row, null)
 
         val iconView = row.findViewById<AppIconView>(R.id.icon)
@@ -34,9 +34,9 @@ class RowBuilder(val ctx: Context) {
             label.text = app.name
         }
 
-        row.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
+        iconView.layoutParams = LinearLayout.LayoutParams(
+            width,
+            height
         )
 
         return row
