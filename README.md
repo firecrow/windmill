@@ -27,3 +27,8 @@ tests found a few things, now setting the background from the assignment of the 
 
 $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jre\'
 $env:ANDROID_SERIAL="RF8R6081VTW"
+
+
+Deciding to remove fragments and us a custom stateless slot element instead
+
+Decided to make a event based ui where elements inherit from a shared behaviour convention

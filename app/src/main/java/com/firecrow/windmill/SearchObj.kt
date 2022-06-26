@@ -1,17 +1,13 @@
 package com.firecrow.windmill
 
-import android.graphics.PorterDuff
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.LinearLayout
-import androidx.activity.viewModels
-import androidx.fragment.app.activityViewModels
 
 class SearchObj(val slot:SlotViewGroup, val ctx: WMActivity) {
-    val layoutResource = R.layout.search_bar
+    val layoutResource = R.layout.tray
     val bar = ctx.layoutInflater.inflate(layoutResource, null)
     val input = bar.findViewById<EditText>(R.id.search) as EditText
     val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView

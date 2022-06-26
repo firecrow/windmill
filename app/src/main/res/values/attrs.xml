@@ -4,4 +4,9 @@
     <declare-styleable name="AppIconView" >
         <attr name="logoSize" format="dimension"/>
     </declare-styleable>
+    <declare-styleable name="IdentifyComponent" >
+        <attr name="identifier" format="string"/>
+        <attr name="listenTo" format="string"/>
+        <attr name="busIdentifier" format="string"/>
+    </declare-styleable>
 </resources>

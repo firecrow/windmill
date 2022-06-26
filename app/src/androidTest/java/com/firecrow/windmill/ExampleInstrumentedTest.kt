@@ -92,7 +92,7 @@ class ExampleInstrumentedTest {
         val color = Color.BLACK
         val height = 100
         val app1 = makeMockApp(color)
-        val cell = builder.buildCell(app1, height)
+        val cell = builder.buildCell(app1, height, false)
         val iconView = cell.findViewById<AppIconView>(R.id.icon)
 
         assertEquals(iconView.backdrop, app1.icon.background)
@@ -107,7 +107,7 @@ class ExampleInstrumentedTest {
 
         val height = 100
         val app1 = makeMockApp()
-        val row = builder.buildRow(app1, 100)
+        val row = builder.buildRow(app1, 100, 100, "")
         val iconView = row.findViewById<AppIconView>(R.id.icon)
 
         assertEquals(iconView.backdrop, app1.icon.background)
@@ -213,16 +213,5 @@ class ExampleInstrumentedTest {
         assertEquals(apps.size, 2)
 
         assertEquals(fetcher.apps.size, apps.size)
-    }
-
-    @Test
-    fun testSearchObj() {
-        val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        val inflater: LayoutInflater =
-            ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
-        val main = inflater.inflate(R.layout.main, null)
-        val slot = main.findViewById<SlotViewGroup>(R.id.tray) as SlotViewGroup
-        assert(slot is SlotViewGroup)
     }
 }
