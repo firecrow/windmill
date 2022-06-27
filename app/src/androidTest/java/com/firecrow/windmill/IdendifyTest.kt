@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.firecrow.windmill.Bus
 import com.firecrow.windmill.IdentifyComponent
+import com.firecrow.windmill.NotifyEvent
 import kotlinx.android.synthetic.main.main.view.*
 import kotlinx.android.synthetic.main.tray.view.*
 import kotlinx.android.synthetic.main.test.view.*
@@ -24,10 +25,27 @@ class IdendifyTest {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val inflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
+        val IDENTIFIER = "test:one"
         val testLayout = inflater.inflate(R.layout.test, null)
         var idtest = testLayout.identify_test as IdentifyComponent
-        assertEquals(idtest.identifier,"test:one")
+        assertEquals(idtest.identifier,IDENTIFIER)
         assert(idtest.listenTo.size == 3)
-        assertEquals(idtest.bus, Bus.getBus("default"))
+        val bus = idtest.bus
+        assertEquals(bus, Bus.getBus("default"))
+
+        val record = bus?.subscribers?.get(idtest.identifier)
+        assertEquals(record?.identifier, IDENTIFIER)
+        assertEquals(record?.component, idtest)
+
+        // 4 because it has one event and three that are listened to
+        assert(bus?.subscribers?.size == 4)
+        for(target in idtest.listenTo){
+           assertNotNull(bus?.subscribers?.get(target))
+        }
+
+        var testEventValue:NotifyEvent? = null
+
+        val event = NotifyEvent(IDENTIFIER, "ON", null, null)
+        bus?.dispatch(event)
     }
 }
