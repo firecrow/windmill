@@ -5,14 +5,19 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import androidx.core.view.children
+import kotlinx.android.synthetic.main.tray.view.*
 
 class SearchObj(val slot:SlotViewGroup, val ctx: WMActivity) {
-    val layoutResource = R.layout.tray
-    val bar = ctx.layoutInflater.inflate(layoutResource, null)
-    val input = bar.findViewById<EditText>(R.id.search) as EditText
-    val button = bar.findViewById<ImageView>(R.id.search_button) as ImageView
-    val gridNavButton = bar.findViewById<ImageView>(R.id.grid_nav_button) as ImageView
-    val listNavButton = bar.findViewById<ImageView>(R.id.list_nav_button) as ImageView
+    val bar = ctx.layoutInflater.inflate(R.layout.tray, slot)
+    val search = bar.search
+
+    val input = bar.search
+    val button = bar.search_button
+    val gridNavButton = bar.grid_nav_button
+    val idendifyGridNav = bar.identify_grid_nav
+    val listNavButton = bar.list_nav_button
+    val idendifyListNav = bar.identify_list_nav
     var state = SearchState.BLANK
 
     init {
@@ -36,17 +41,21 @@ class SearchObj(val slot:SlotViewGroup, val ctx: WMActivity) {
         })
 
         gridNavButton.setImageResource(R.drawable.grid_icon)
-        gridNavButton.setOnClickListener(View.OnClickListener {
-            ctx.setContent(ScreenToken.GRID)
-            setNavIconState(ScreenToken.GRID)
+        idendifyGridNav.setOnEventRecieved { component, event ->
+            if(event.identifier == idendifyGridNav.identifier){
+                ctx.setContent(ScreenToken.GRID)
+                setNavIconState(ScreenToken.GRID)
+            }
+            1
+        }
+        idendifyGridNav.setOnClickListener(View.OnClickListener {
+            idendifyGridNav.bus?.dispatch(NotifyEvent(idendifyGridNav.identifier, "SELECTED", null, null))
         })
         listNavButton.setImageResource(R.drawable.list_icon)
-        listNavButton.setOnClickListener(View.OnClickListener {
+        idendifyListNav.setOnClickListener(View.OnClickListener {
             ctx.setContent(ScreenToken.LIST)
             setNavIconState(ScreenToken.LIST)
         })
-
-        slot.addView(bar)
     }
 
     fun resetNav(){

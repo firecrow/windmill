@@ -3,6 +3,7 @@ package com.firecrow.windmill
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import com.firecrow.windmill.R
 
 data class NotifyEvent(
@@ -73,10 +74,12 @@ open class Bus(val busIdentier: String) {
                 target.onEventRecieved(event)
             }
         }
+        // notify self as well
+        source?.component?.onEventRecieved(event)
     }
 }
 
-open class IdentifyComponent(val ctx: Context, val attrs: AttributeSet) : ViewGroup(ctx, attrs) {
+open class IdentifyComponent(val ctx: Context, val attrs: AttributeSet) : LinearLayout(ctx, attrs) {
     var identifier: String = ""
     var listenTo: List<String> = listOf()
     var bus: Bus? = null
@@ -99,11 +102,10 @@ open class IdentifyComponent(val ctx: Context, val attrs: AttributeSet) : ViewGr
         bus?.subscribe(this)
     }
 
-    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        TODO("Not yet implemented")
-    }
-
     fun onEventRecieved(event:NotifyEvent){
         onEventRecievedCallback?.invoke(this, event)
+    }
+    fun setOnEventRecieved(callback: (IdentifyComponent, NotifyEvent) -> Unit){
+        onEventRecievedCallback = callback
     }
 }

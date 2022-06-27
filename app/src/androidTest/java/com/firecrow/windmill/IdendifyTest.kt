@@ -52,7 +52,11 @@ class IdendifyTest {
             currentEvent = event
         }
 
-        val event = NotifyEvent(IDENTIFIER_TWO, "ON", null, null)
+        var event = NotifyEvent(IDENTIFIER_TWO, "ON", null, null)
+        bus?.dispatch(event)
+        assertEquals(currentEvent, event)
+
+        event = NotifyEvent(IDENTIFIER, "ON2", null, null)
         bus?.dispatch(event)
         assertEquals(currentEvent, event)
     }
