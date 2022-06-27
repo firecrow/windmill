@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:windmill="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:windmill="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -12,28 +12,25 @@
         windmill:busIdentifier="bus:one"
         windmill:identifier="test:one"
         windmill:listenTo="test:two,test:three,test:four"
-        >
-    </com.firecrow.windmill.IdentifyComponent>
+    />
     <com.firecrow.windmill.IdentifyComponent
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:windmill="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/identify_test_two"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    windmill:busIdentifier="bus:one"
-    windmill:identifier="test:one"
-    windmill:listenTo="test:two,test:three,test:four"
-        >
-    </com.firecrow.windmill.IdentifyComponent>
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:windmill="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/identify_test_two"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        windmill:busIdentifier="bus:one"
+        windmill:identifier="test:two"
+        windmill:listenTo="test:two,test:three,test:four"
+    />
     <com.firecrow.windmill.IdentifyComponent
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:windmill="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/identify_test_three"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    windmill:busIdentifier="bus:one"
-    windmill:identifier="test:one"
-    windmill:listenTo="test:two,test:three,test:four"
-        >
-    </com.firecrow.windmill.IdentifyComponent>
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:windmill="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/identify_test_three"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        windmill:busIdentifier="bus:one"
+        windmill:identifier="test:three"
+        windmill:listenTo="test:two,test:three,test:four"
+    />
 </LinearLayout>

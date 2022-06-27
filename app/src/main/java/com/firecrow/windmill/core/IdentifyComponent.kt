@@ -80,7 +80,7 @@ open class IdentifyComponent(val ctx: Context, val attrs: AttributeSet) : ViewGr
     var identifier: String = ""
     var listenTo: List<String> = listOf()
     var bus: Bus? = null
-    val onEventRecievedCallback: ((component: IdentifyComponent, event: NotifyEvent) -> Unit)? = null
+    var onEventRecievedCallback: ((component: IdentifyComponent, event: NotifyEvent) -> Unit)? = null
 
     init {
         val attsArray = context.theme.obtainStyledAttributes(

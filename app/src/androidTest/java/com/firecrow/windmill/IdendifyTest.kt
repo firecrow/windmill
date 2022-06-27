@@ -26,6 +26,7 @@ class IdendifyTest {
         val inflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
         val IDENTIFIER = "test:one"
+        val IDENTIFIER_TWO = "test:two"
         val testLayout = inflater.inflate(R.layout.test, null)
         var idtest = testLayout.identify_test as IdentifyComponent
         assertEquals(idtest.identifier,IDENTIFIER)
@@ -43,9 +44,16 @@ class IdendifyTest {
            assertNotNull(bus?.subscribers?.get(target))
         }
 
-        var testEventValue:NotifyEvent? = null
+        var currentEvent:NotifyEvent? = null
+        var currentSource:IdentifyComponent? = null
 
-        val event = NotifyEvent(IDENTIFIER, "ON", null, null)
+        idtest.onEventRecievedCallback = { source, event ->
+            currentSource = source
+            currentEvent = event
+        }
+
+        val event = NotifyEvent(IDENTIFIER_TWO, "ON", null, null)
         bus?.dispatch(event)
+        assertEquals(currentEvent, event)
     }
 }
