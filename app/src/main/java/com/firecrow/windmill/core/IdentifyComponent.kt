@@ -34,6 +34,7 @@ open class Bus(val busIdentier: String) {
     fun subscribe(component: IdentifyComponent) {
         val record = initSubscriber(component.identifier)
         record.component = component
+        setListenOnIdentifier(component.identifier, component)
         for(targetIdentifier in component.listenTo){
             setListenOnIdentifier(targetIdentifier, component)
         }

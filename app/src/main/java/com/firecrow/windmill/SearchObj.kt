@@ -8,7 +8,7 @@ import android.widget.ImageView
 import androidx.core.view.children
 import kotlinx.android.synthetic.main.tray.view.*
 
-class SearchObj(val slot:SlotViewGroup, val ctx: WMActivity) {
+class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
     val bar = ctx.layoutInflater.inflate(R.layout.tray, slot)
     val search = bar.search
 
@@ -42,14 +42,21 @@ class SearchObj(val slot:SlotViewGroup, val ctx: WMActivity) {
 
         gridNavButton.setImageResource(R.drawable.grid_icon)
         idendifyGridNav.setOnEventRecieved { component, event ->
-            if(event.identifier == idendifyGridNav.identifier){
+            if (event.identifier == idendifyGridNav.identifier) {
                 ctx.setContent(ScreenToken.GRID)
                 setNavIconState(ScreenToken.GRID)
             }
             1
         }
         idendifyGridNav.setOnClickListener(View.OnClickListener {
-            idendifyGridNav.bus?.dispatch(NotifyEvent(idendifyGridNav.identifier, "SELECTED", null, null))
+            idendifyGridNav.bus?.dispatch(
+                NotifyEvent(
+                    idendifyGridNav.identifier,
+                    "SELECTED",
+                    null,
+                    null
+                )
+            )
         })
         listNavButton.setImageResource(R.drawable.list_icon)
         idendifyListNav.setOnClickListener(View.OnClickListener {
@@ -58,17 +65,17 @@ class SearchObj(val slot:SlotViewGroup, val ctx: WMActivity) {
         })
     }
 
-    fun resetNav(){
+    fun resetNav() {
         listNavButton.setColorFilter(R.color.nav_icon_tint)
         gridNavButton.setColorFilter(R.color.nav_icon_tint)
     }
 
-    fun setNavIconState(activeNavState:ScreenToken){
+    fun setNavIconState(activeNavState: ScreenToken) {
         resetNav()
-        if(activeNavState == ScreenToken.GRID) {
+        if (activeNavState == ScreenToken.GRID) {
             gridNavButton.clearColorFilter()
         }
-        if(activeNavState == ScreenToken.LIST) {
+        if (activeNavState == ScreenToken.LIST) {
             listNavButton.clearColorFilter()
         }
     }

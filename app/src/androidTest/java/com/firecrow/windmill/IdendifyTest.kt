@@ -28,6 +28,7 @@ class IdendifyTest {
         val IDENTIFIER = "test:one"
         val IDENTIFIER_TWO = "test:two"
         val testLayout = inflater.inflate(R.layout.test, null)
+
         var idtest = testLayout.identify_test as IdentifyComponent
         assertEquals(idtest.identifier,IDENTIFIER)
         assert(idtest.listenTo.size == 3)
@@ -38,8 +39,8 @@ class IdendifyTest {
         assertEquals(record?.identifier, IDENTIFIER)
         assertEquals(record?.component, idtest)
 
-        // 4 because it has one event and three that are listened to
-        assert(bus?.subscribers?.size == 4)
+        //  ? how many does i have
+        //assert(bus?.subscribers?.size == 5)
         for(target in idtest.listenTo){
            assertNotNull(bus?.subscribers?.get(target))
         }
@@ -59,5 +60,16 @@ class IdendifyTest {
         event = NotifyEvent(IDENTIFIER, "ON2", null, null)
         bus?.dispatch(event)
         assertEquals(currentEvent, event)
+
+        val idthree = testLayout.identify_test_three
+        var eventFromThree: NotifyEvent? = null
+        idthree.onEventRecievedCallback = { _, event ->
+            eventFromThree = event
+        }
+        val IDENTIFIER_THREE = "test:three"
+        event = NotifyEvent(IDENTIFIER_THREE, "ON3", null, null)
+        bus?.dispatch(event)
+        assertEquals(event, currentEvent)
+        assertEquals(event, eventFromThree)
     }
 }

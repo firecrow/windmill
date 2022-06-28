@@ -31,6 +31,5 @@
         android:layout_height="match_parent"
         windmill:busIdentifier="bus:one"
         windmill:identifier="test:three"
-        windmill:listenTo="test:two,test:three,test:four"
     />
 </LinearLayout>

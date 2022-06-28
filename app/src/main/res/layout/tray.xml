@@ -16,6 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             windmill:busIdentifier="bus:nav"
+            windmill:listenTo="nav:selected"
             windmill:identifier="nav:grid_icon">
 
             <ImageView
