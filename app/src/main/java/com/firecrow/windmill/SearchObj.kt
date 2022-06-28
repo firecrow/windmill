@@ -46,7 +46,6 @@ class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
                 ctx.setContent(ScreenToken.GRID)
                 setNavIconState(ScreenToken.GRID)
             }
-            1
         }
         idendifyGridNav.setOnClickListener(View.OnClickListener {
             idendifyGridNav.bus?.dispatch(
