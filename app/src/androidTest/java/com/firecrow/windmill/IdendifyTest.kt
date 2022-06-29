@@ -5,9 +5,8 @@ import android.content.Context
 import android.view.LayoutInflater
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.firecrow.windmill.Bus
+import com.firecrow.windmill.core.*
 import com.firecrow.windmill.IdentifyComponent
-import com.firecrow.windmill.NotifyEvent
 import kotlinx.android.synthetic.main.main.view.*
 import kotlinx.android.synthetic.main.tray.view.*
 import kotlinx.android.synthetic.main.test.view.*
@@ -33,7 +32,7 @@ class IdendifyTest {
         assertEquals(idtest.identifier,IDENTIFIER)
         assert(idtest.listenTo.size == 3)
         val bus = idtest.bus
-        assertEquals(bus, Bus.getBus("default"))
+        assertEquals(bus, NotifyBus.getBus("default"))
 
         val record = bus?.subscribers?.get(idtest.identifier)
         assertEquals(record?.identifier, IDENTIFIER)

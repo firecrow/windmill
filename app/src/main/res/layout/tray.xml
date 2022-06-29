@@ -10,13 +10,15 @@
         android:layout_height="50dp">
         >
 
-        <com.firecrow.windmill.IdentifyComponent xmlns:android="http://schemas.android.com/apk/res/android"
+        <com.firecrow.windmill.ClickableIdentifyComponent
             xmlns:windmill="http://schemas.android.com/apk/res-auto"
             android:id="@+id/identify_grid_nav"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             windmill:busIdentifier="bus:nav"
             windmill:listenTo="nav:selected"
+            windmill:providesState="nav:selected"
+            windmill:targetValue="grid"
             windmill:identifier="nav:grid_icon">
 
             <ImageView
@@ -26,7 +28,7 @@
                 android:layout_marginLeft="30dp"
                 android:padding="10dp"
                 android:id="@+id/grid_nav_button" />
-        </com.firecrow.windmill.IdentifyComponent>
+        </com.firecrow.windmill.ClickableIdentifyComponent>
 
         <com.firecrow.windmill.IdentifyComponent xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:windmill="http://schemas.android.com/apk/res-auto"

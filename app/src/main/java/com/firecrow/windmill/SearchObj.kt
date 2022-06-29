@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.core.view.children
+import com.firecrow.windmill.core.NotifyEvent
 import kotlinx.android.synthetic.main.tray.view.*
 
 class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
@@ -42,21 +43,11 @@ class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
 
         gridNavButton.setImageResource(R.drawable.grid_icon)
         idendifyGridNav.setOnEventRecieved { component, event ->
-            if (event.identifier == idendifyGridNav.identifier) {
+            if (event.valueString == idendifyGridNav.targetValue) {
                 ctx.setContent(ScreenToken.GRID)
                 setNavIconState(ScreenToken.GRID)
             }
         }
-        idendifyGridNav.setOnClickListener(View.OnClickListener {
-            idendifyGridNav.bus?.dispatch(
-                NotifyEvent(
-                    idendifyGridNav.identifier,
-                    "SELECTED",
-                    null,
-                    null
-                )
-            )
-        })
         listNavButton.setImageResource(R.drawable.list_icon)
         idendifyListNav.setOnClickListener(View.OnClickListener {
             ctx.setContent(ScreenToken.LIST)
