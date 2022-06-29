@@ -1,6 +1,4 @@
-package com.firecrow.windmill.core
-
-import com.firecrow.windmill.IdentifyComponent
+package com.firecrow.windmill
 
 data class NotifyEvent(
     val identifier: String,

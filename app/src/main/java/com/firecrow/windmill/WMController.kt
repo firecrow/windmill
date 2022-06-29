@@ -6,7 +6,6 @@ import android.util.DisplayMetrics
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.FragmentContainerView
-import com.firecrow.windmill.core.NotifyEvent
 
 
 open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, val searchBar:SlotViewGroup) {
@@ -17,7 +16,7 @@ open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, 
     val columns = 5
     val rows = 10
     var totals: Point = Point(0,0)
-    val bus = searchObj.idendifyGridNav.bus
+    val bus = searchObj.identifyGridNav.bus
 
     fun setState(state:ScreenToken){
         var targetValue = "grid"
@@ -25,7 +24,7 @@ open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, 
             targetValue = "list"
         }
         bus?.dispatch(
-            NotifyEvent(searchObj.idendifyGridNav.identifier, searchObj.idendifyGridNav.providesState, targetValue, null)
+            NotifyEvent(searchObj.identifyGridNav.identifier, searchObj.identifyGridNav.providesState, targetValue, null)
         )
     }
 

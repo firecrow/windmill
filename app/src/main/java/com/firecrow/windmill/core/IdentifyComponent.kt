@@ -6,10 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import com.firecrow.windmill.R
-import com.firecrow.windmill.core.*
 
-
-open class IdentifyComponent(open val ctx: Context, open val attrs: AttributeSet) : LinearLayout(ctx, attrs) {
+open class IdentifyComponent(val ctx: Context, attrs: AttributeSet) : LinearLayout(ctx, attrs) {
     var identifier: String = ""
     var listenTo: List<String> = listOf()
     var bus: NotifyBus? = null
@@ -49,7 +47,7 @@ open class IdentifyComponent(open val ctx: Context, open val attrs: AttributeSet
     }
 }
 
-class ClickableIdentifyComponent(override var ctx: Context, override val attrs: AttributeSet): IdentifyComponent(ctx, attrs){
+class ClickableIdentifyComponent(ctx: Context, attrs: AttributeSet): IdentifyComponent(ctx, attrs){
 
     init {
         this.targetValue?.let {

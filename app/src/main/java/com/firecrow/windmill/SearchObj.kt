@@ -6,7 +6,6 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.core.view.children
-import com.firecrow.windmill.core.NotifyEvent
 import kotlinx.android.synthetic.main.tray.view.*
 
 class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
@@ -16,9 +15,9 @@ class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
     val input = bar.search
     val button = bar.search_button
     val gridNavButton = bar.grid_nav_button
-    val idendifyGridNav = bar.identify_grid_nav
+    val identifyGridNav = bar.findViewById<ClickableIdentifyComponent>(R.id.identify_grid_nav)
     val listNavButton = bar.list_nav_button
-    val idendifyListNav = bar.identify_list_nav
+    val identifyListNav = bar.findViewById<ClickableIdentifyComponent>(R.id.identify_list_nav)
     var state = SearchState.BLANK
 
     init {
@@ -41,27 +40,18 @@ class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
             }
         })
 
-        //gridNavButton.setImageResource(R.drawable.grid_icon)
-        idendifyGridNav.setOnEventRecieved { component, event ->
-            if (event.valueString == idendifyGridNav.targetValue) {
+        identifyGridNav.setOnEventRecieved { component, event ->
+            if (event.valueString == identifyGridNav.targetValue) {
                 ctx.setContent(ScreenToken.GRID)
                 setNavIconState(ScreenToken.GRID)
             }
         }
-        idendifyListNav.setOnEventRecieved { component, event ->
-            if (event.valueString == idendifyListNav.targetValue) {
+        identifyListNav.setOnEventRecieved { component, event ->
+            if (event.valueString == identifyListNav.targetValue) {
                 ctx.setContent(ScreenToken.LIST)
                 setNavIconState(ScreenToken.LIST)
             }
         }
-        /*
-        listNavButton.setImageResource(R.drawable.list_icon)
-        idendifyListNav.setOnClickListener(View.OnClickListener {
-            ctx.setContent(ScreenToken.LIST)
-            setNavIconState(ScreenToken.LIST)
-        })
-        */
-
     }
 
     fun resetNav() {

@@ -12,6 +12,7 @@
         >
 
         <com.firecrow.windmill.ClickableIdentifyComponent
+            xmlns:windmill="http://schemas.android.com/apk/res-auto"
             android:id="@+id/identify_grid_nav"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -26,11 +27,13 @@
                 android:layout_height="40dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginLeft="30dp"
+                android:src="@drawable/grid_icon"
                 android:padding="10dp"
                 android:id="@+id/grid_nav_button" />
         </com.firecrow.windmill.ClickableIdentifyComponent>
 
         <com.firecrow.windmill.ClickableIdentifyComponent
+            xmlns:windmill="http://schemas.android.com/apk/res-auto"
             android:id="@+id/identify_list_nav"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -44,6 +47,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:padding="10dp"
+                android:src="@drawable/list_icon"
                 android:id="@+id/list_nav_button"
                 android:layout_marginTop="5dp"
                 android:layout_marginLeft="5dp"
