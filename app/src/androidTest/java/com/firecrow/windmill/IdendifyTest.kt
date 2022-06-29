@@ -1,4 +1,4 @@
-package com.firecrow.windmill.core
+package com.firecrow.windmill
 
 import com.firecrow.windmill.R
 import android.content.Context

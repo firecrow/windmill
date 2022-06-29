@@ -11,8 +11,12 @@ data class ComponentEventRecord(
     val identifier: String,
     var component: IdentifyComponent?,
     var curentValue: NotifyEvent?,
-    val listening: MutableList<IdentifyComponent>
+    val listening: MutableList<NotifyCallable>
 )
+
+interface NotifyCallable {
+    fun onEventReceived(event:NotifyEvent)
+}
 
 open class NotifyBus(val busIdentier: String) {
     val subscribers: MutableMap<String, ComponentEventRecord> = mutableMapOf()
@@ -25,15 +29,13 @@ open class NotifyBus(val busIdentier: String) {
         }
     }
 
-    fun subscribe(component: IdentifyComponent, subscribeTo:List<String>) {
-        val record = initSubscriber(component.identifier)
-        record.component = component
+    fun subscribe(component: NotifyCallable, subscribeTo:List<String>) {
         for(targetIdentifier in subscribeTo){
             setListenOnIdentifier(targetIdentifier, component)
         }
     }
 
-    fun setListenOnIdentifier(identifier: String, component: IdentifyComponent){
+    fun setListenOnIdentifier(identifier: String, component: NotifyCallable){
         val target = initSubscriber(identifier)
         target?.listening?.add(component)
     }
@@ -54,7 +56,7 @@ open class NotifyBus(val busIdentier: String) {
                 identifier,
                 null,
                 null,
-                mutableListOf<IdentifyComponent>()
+                mutableListOf<NotifyCallable>()
             )
             this.subscribers.put(identifier, record)
             return record
@@ -62,13 +64,19 @@ open class NotifyBus(val busIdentier: String) {
     }
 
     fun dispatch(event: NotifyEvent) {
-        val source = subscribers.get(event.identifier)
+        val source = subscribers.get(event.state)
         source?.let {
             for (target in it.listening) {
-                target.onEventRecieved(event)
+                target.onEventReceived(event)
             }
         }
         // notify self as well
-        source?.component?.onEventRecieved(event)
+        source?.component?.onEventReceived(event)
+    }
+}
+
+interface NotifyEventCallback: NotifyCallable {
+    override fun onEventReceived(event: NotifyEvent){
+        // lambda overrides here
     }
 }

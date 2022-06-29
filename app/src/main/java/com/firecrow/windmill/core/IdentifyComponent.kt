@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import com.firecrow.windmill.R
 
-open class IdentifyComponent(val ctx: Context, attrs: AttributeSet) : LinearLayout(ctx, attrs) {
+open class IdentifyComponent(val ctx: Context, attrs: AttributeSet) : LinearLayout(ctx, attrs), NotifyCallable {
     var identifier: String = ""
     var listenTo: List<String> = listOf()
     var bus: NotifyBus? = null
@@ -39,7 +39,7 @@ open class IdentifyComponent(val ctx: Context, attrs: AttributeSet) : LinearLayo
         bus?.subscribe(this, this.listenTo)
     }
 
-    fun onEventRecieved(event:NotifyEvent){
+    override fun onEventReceived(event:NotifyEvent){
         onEventRecievedCallback?.invoke(this, event)
     }
     fun setOnEventRecieved(callback: (IdentifyComponent, NotifyEvent) -> Unit){
@@ -47,7 +47,7 @@ open class IdentifyComponent(val ctx: Context, attrs: AttributeSet) : LinearLayo
     }
 }
 
-class ClickableIdentifyComponent(ctx: Context, attrs: AttributeSet): IdentifyComponent(ctx, attrs){
+class ClickableIdentifyComponent(ctx: Context, attrs: AttributeSet): IdentifyComponent(ctx, attrs) {
 
     init {
         this.targetValue?.let {

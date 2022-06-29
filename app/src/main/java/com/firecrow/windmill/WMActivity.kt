@@ -12,6 +12,12 @@ import androidx.fragment.app.*
 import androidx.lifecycle.Observer
 
 
+val NAV_SELECTED = "nav:selected"
+val DEFAULT = "default"
+val GRID = "grid"
+val LIST = "list"
+val ANONYMOUS = "anonymous"
+
 open class WMActivity : AppCompatActivity() {
     lateinit var controller: WMController
     lateinit var layout: FragmentContainerView
@@ -30,24 +36,30 @@ open class WMActivity : AppCompatActivity() {
         if (instance == null) {
             setupNavigation()
         }
-        controller.setState(ScreenToken.GRID)
         controller.update("")
+
+        val bus = NotifyBus.busMap.get(DEFAULT)
+        bus?.subscribe(object: NotifyEventCallback {
+            override fun onEventReceived(event: NotifyEvent) {
+                setContent(event.valueString ?: "")
+            }}, listOf<String>(NAV_SELECTED))
+
+        controller.setState(GRID)
     }
 
     fun setupNavigation(){
-        setContent(ScreenToken.GRID)
+        setContent(GRID)
     }
 
-    fun setContent(screen: ScreenToken){
+    fun setContent(screen: String){
         supportFragmentManager.commit {
             setReorderingAllowed(true)
-            if (screen == ScreenToken.GRID) {
+            if (screen == GRID) {
                 replace<GridFragment>(R.id.apps_fragment)
-            }else if(screen == ScreenToken.LIST){
+            }else if (screen == LIST) {
                 replace<ListFragment>(R.id.apps_fragment)
             }
         }
-        controller.searchObj.setNavIconState(screen)
     }
 
     override fun onResume() {

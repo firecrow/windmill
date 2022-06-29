@@ -24,7 +24,7 @@ class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
 
         button.setOnClickListener { v ->
             if (state == SearchState.SEARCH) {
-                ctx.controller.reset()
+                //
             } else if (state == SearchState.SCROLL) {
                 ctx.controller.scrollTop()
             }
@@ -42,33 +42,20 @@ class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
 
         identifyGridNav.setOnEventRecieved { component, event ->
             if (event.valueString == identifyGridNav.targetValue) {
-                ctx.setContent(ScreenToken.GRID)
-                setNavIconState(ScreenToken.GRID)
+                gridNavButton.clearColorFilter()
+            }else {
+                gridNavButton.setColorFilter(R.color.nav_icon_tint)
             }
+
         }
         identifyListNav.setOnEventRecieved { component, event ->
             if (event.valueString == identifyListNav.targetValue) {
-                ctx.setContent(ScreenToken.LIST)
-                setNavIconState(ScreenToken.LIST)
+                listNavButton.clearColorFilter()
+            }else{
+                listNavButton.setColorFilter(R.color.nav_icon_tint)
             }
         }
     }
-
-    fun resetNav() {
-        listNavButton.setColorFilter(R.color.nav_icon_tint)
-        gridNavButton.setColorFilter(R.color.nav_icon_tint)
-    }
-
-    fun setNavIconState(activeNavState: ScreenToken) {
-        resetNav()
-        if (activeNavState == ScreenToken.GRID) {
-            gridNavButton.clearColorFilter()
-        }
-        if (activeNavState == ScreenToken.LIST) {
-            listNavButton.clearColorFilter()
-        }
-    }
-
 
     fun setButton(itemPos: Int) {
         if (input.text.length > 0) {

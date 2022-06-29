@@ -8,23 +8,28 @@ import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.FragmentContainerView
 
 
-open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, val searchBar:SlotViewGroup) {
+open class WMController(
+    val ctx: WMActivity,
+    val layout: FragmentContainerView,
+    val searchBar: SlotViewGroup
+) {
     val searchObj = SearchObj(searchBar, ctx)
     var query: String = ""
     var layoutHeight = 0
     var layoutWidth = 0
     val columns = 5
     val rows = 10
-    var totals: Point = Point(0,0)
-    val bus = searchObj.identifyGridNav.bus
+    var totals: Point = Point(0, 0)
+    val bus = NotifyBus.busMap.get(DEFAULT)
 
-    fun setState(state:ScreenToken){
-        var targetValue = "grid"
-        if(state == ScreenToken.LIST) {
-            targetValue = "list"
-        }
+    fun setState(state: String) {
         bus?.dispatch(
-            NotifyEvent(searchObj.identifyGridNav.identifier, searchObj.identifyGridNav.providesState, targetValue, null)
+            NotifyEvent(
+                ANONYMOUS,
+                NAV_SELECTED,
+                state,
+                null
+            )
         )
     }
 
@@ -39,15 +44,17 @@ open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, 
         val metrics = DisplayMetrics()
         ctx.getWindowManager().getDefaultDisplay().getMetrics(metrics)
 
-        val height = metrics.heightPixels - ctx.resources.getDimension(R.dimen.search_bar_height).toInt()
-        return Point(metrics.widthPixels, height )
+        val height =
+            metrics.heightPixels - ctx.resources.getDimension(R.dimen.search_bar_height).toInt()
+        return Point(metrics.widthPixels, height)
     }
 
-    val cellSize:Point get(){
-        if(totals.x == 0)
-            totals = getHeightRect()
-        return Point(totals.x / columns, totals.y / rows)
-    }
+    val cellSize: Point
+        get() {
+            if (totals.x == 0)
+                totals = getHeightRect()
+            return Point(totals.x / columns, totals.y / rows)
+        }
 
     fun reset() {
         hideKb()
@@ -59,11 +66,13 @@ open class WMController (val ctx: WMActivity, val layout:FragmentContainerView, 
 
     fun update(search: String) {
         query = search
-        var screen = ScreenToken.GRID
-        if(query?.length > 0){
-            screen = ScreenToken.LIST
+        var screen = GRID
+        if (query?.length > 0) {
+            screen = LIST
         }
-        ctx.setContent(screen)
+        bus?.dispatch(
+            NotifyEvent(ANONYMOUS, NAV_SELECTED, screen, null)
+        )
         ctx.model.searchCriteria.value = query
     }
 
