@@ -75,8 +75,6 @@ open class NotifyBus(val busIdentier: String) {
     }
 }
 
-interface NotifyEventCallback: NotifyCallable {
-    override fun onEventReceived(event: NotifyEvent){
-        // lambda overrides here
-    }
+fun interface NotifyEventCallback: NotifyCallable {
+    override fun onEventReceived(event: NotifyEvent)
 }

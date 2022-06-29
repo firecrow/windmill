@@ -70,9 +70,7 @@ open class WMController(
         if (query?.length > 0) {
             screen = LIST
         }
-        bus?.dispatch(
-            NotifyEvent(ANONYMOUS, NAV_SELECTED, screen, null)
-        )
+        setState(screen)
         ctx.model.searchCriteria.value = query
     }
 

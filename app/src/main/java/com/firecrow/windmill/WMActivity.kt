@@ -36,15 +36,13 @@ open class WMActivity : AppCompatActivity() {
         if (instance == null) {
             setupNavigation()
         }
-        controller.update("")
 
         val bus = NotifyBus.busMap.get(DEFAULT)
-        bus?.subscribe(object: NotifyEventCallback {
-            override fun onEventReceived(event: NotifyEvent) {
+        bus?.subscribe(NotifyEventCallback { event ->
                 setContent(event.valueString ?: "")
-            }}, listOf<String>(NAV_SELECTED))
+            }, listOf<String>(NAV_SELECTED))
 
-        controller.setState(GRID)
+        controller.update("")
     }
 
     fun setupNavigation(){
