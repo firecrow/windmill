@@ -12,5 +12,5 @@
         <attr name="providesState" format="string"/>
         <attr name="busIdentifier" format="string"/>
     </declare-styleable>
-    <declare-styleable name="ClickableIdentifyComponent" />
+    <declare-styleable name="ClickableIdentifyComponent"/>
 </resources>

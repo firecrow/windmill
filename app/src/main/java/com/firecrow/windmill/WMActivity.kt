@@ -29,6 +29,7 @@ open class WMActivity : AppCompatActivity() {
         if (instance == null) {
             setupNavigation()
         }
+        controller.setState(ScreenToken.GRID)
         controller.update("")
     }
 

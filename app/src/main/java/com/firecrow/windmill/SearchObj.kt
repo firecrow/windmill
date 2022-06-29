@@ -41,18 +41,27 @@ class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
             }
         })
 
-        gridNavButton.setImageResource(R.drawable.grid_icon)
+        //gridNavButton.setImageResource(R.drawable.grid_icon)
         idendifyGridNav.setOnEventRecieved { component, event ->
             if (event.valueString == idendifyGridNav.targetValue) {
                 ctx.setContent(ScreenToken.GRID)
                 setNavIconState(ScreenToken.GRID)
             }
         }
+        idendifyListNav.setOnEventRecieved { component, event ->
+            if (event.valueString == idendifyListNav.targetValue) {
+                ctx.setContent(ScreenToken.LIST)
+                setNavIconState(ScreenToken.LIST)
+            }
+        }
+        /*
         listNavButton.setImageResource(R.drawable.list_icon)
         idendifyListNav.setOnClickListener(View.OnClickListener {
             ctx.setContent(ScreenToken.LIST)
             setNavIconState(ScreenToken.LIST)
         })
+        */
+
     }
 
     fun resetNav() {
