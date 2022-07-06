@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import com.firecrow.windmill.model.AppData
 
 class RowBuilder(val ctx: Context) {
     val inflater: LayoutInflater =

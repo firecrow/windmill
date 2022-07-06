@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.core.view.children
+import com.firecrow.windmill.model.SearchState
 import kotlinx.android.synthetic.main.tray.view.*
 
 class SearchObj(val slot: SlotViewGroup, val ctx: WMActivity) {
