@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.*
 import androidx.lifecycle.Observer
+import com.firecrow.windmill.model.DBHelper
 
 
 val NAV_SELECTED = "nav:selected"
@@ -27,7 +28,8 @@ open class WMActivity : AppCompatActivity() {
     override fun onCreate(instance: Bundle?) {
         super.onCreate(instance)
         setContentView(R.layout.main)
-        fetcher = Fetcher(this)
+        val dbh = DBHelper(this)
+        fetcher = Fetcher(this, dbh)
 
         layout = findViewById<FragmentContainerView>(R.id.apps_fragment) as FragmentContainerView
         val searchBar = findViewById<LinearLayout>(R.id.tray) as SlotViewGroup

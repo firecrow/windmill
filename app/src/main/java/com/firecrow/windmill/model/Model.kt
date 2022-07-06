@@ -1,4 +1,4 @@
-package com.firecrow.windmill
+package com.firecrow.windmill.model
 
 import android.content.pm.ApplicationInfo
 import android.graphics.drawable.AdaptiveIconDrawable
@@ -16,8 +16,15 @@ enum class SearchState {
 }
 
 
-class AppData(
+data class AppData(
     var name: String,
     var packageName: String,
     var icon: AdaptiveIconDrawable,
+    var meta: MetaData,
 );
+
+data class MetaData(
+    val starred: Boolean? = null,
+    var position: Int? = null,
+    val iconStyle: String? = null,
+)
