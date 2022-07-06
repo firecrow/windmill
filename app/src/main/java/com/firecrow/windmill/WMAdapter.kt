@@ -8,6 +8,7 @@ import android.widget.AbsListView
 import android.widget.Adapter
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import com.firecrow.windmill.model.AppData
 
 class WMListAdapter(
     val ctx: WMActivity,

@@ -8,6 +8,7 @@ import android.widget.GridView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import com.firecrow.windmill.model.AppData
 
 open class GridFragment: Fragment(R.layout.grid_fragment_layout) {
     lateinit var adapter: WMGridAdapter
@@ -40,8 +41,12 @@ open class GridFragment: Fragment(R.layout.grid_fragment_layout) {
         return WMGridAdapter(activity as WMActivity, arrayListOf<AppData>(), rowBuilder)
     }
 
-    fun update(query: String) {
-        val apps = (activity as WMActivity)?.fetcher.fetch(query)
+    fun update(query: String, isStarred: Boolean = false) {
+        val filters = mutableListOf(filterByQuery(query))
+        if(isStarred){
+            filters.add(filterByStarred())
+        }
+        val apps = (activity as WMActivity)?.fetcher.fetch(filters)
         apps?.let {
             adapter.clear()
             adapter.addAll(it)
