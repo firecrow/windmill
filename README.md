@@ -25,9 +25,6 @@ got the appiconview unit test to work, created a getter for backdropColor, the i
 
 tests found a few things, now setting the background from the assignment of the icon, and refactored the detectiong of hte color, icon is always an adaptiveicondrawable now with a background and a foreground, if the icon from the system is a regular drawable I make that the foreground and give it a transparent background.
 
-$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jre\'
-$env:ANDROID_SERIAL="RF8R6081VTW"
-
 
 Deciding to remove fragments and us a custom stateless slot element instead
 
