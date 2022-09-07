@@ -1,5 +1,5 @@
 *Windmill - Application Manager*
-android app by Firecrow Silvernight - windmill@firecrow.com
+android app by Firecrow Silvernight
 
 Windmill is a simple homescreen app that shows icons in a grid with a minimal edge to edge modern look where icons are no longer floating in space but fill entire grid cells with their respective background colors.
 
