@@ -30,4 +30,4 @@ Deciding to remove fragments and us a custom stateless slot element instead
 
 Decided to make a event based ui where elements inherit from a shared behaviour convention
 
-![Screenshot](/docs/screenshot.jpg)
+![Screenshot](/docs/screenshot.jpg | width=400)
