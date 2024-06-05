@@ -3,6 +3,8 @@ android app by Firecrow Silvernight
 
 Windmill is a simple homescreen app that shows icons in a grid with a minimal edge to edge modern look where icons are no longer floating in space but fill entire grid cells with their respective background colors.
 
+![Screenshot](/docs/screenshot.jpg)
+
 The app is broken up into several parts, WMActivity has the main behavior and anything essentially shared, the rest of the app splits into pieces based on the behavior domain they own.
 
 AppsFragment.kt - this is the generic fragment class for both the list and grid views
@@ -30,4 +32,3 @@ Deciding to remove fragments and us a custom stateless slot element instead
 
 Decided to make a event based ui where elements inherit from a shared behaviour convention
 
-![Screenshot](/docs/screenshot.jpg)
